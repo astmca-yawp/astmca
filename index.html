@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>YaWp v29</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="yawp.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+
+    <h1 class="yawp-title">YaWp</h1>
+
+    <div id="grid" class="grid"></div>
+
+    <div class="controls-layout">
+      <div class="side-group side-left">
+        <button id="solve-btn" type="button">✔️</button>
+        <button id="hint-btn" type="button">💡</button>
+      </div>
+
+      <div class="quick-keys">
+        <div class="quick-row">
+          <button class="qkey" type="button" data-dr="-2" data-dc="-2">↖︎</button>
+          <button class="qkey" type="button" data-dr="-3" data-dc="0">↑</button>
+          <button class="qkey" type="button" data-dr="-2" data-dc="2">↗︎</button>
+        </div>
+        <div class="quick-row">
+          <button class="qkey" type="button" data-dr="0" data-dc="-3">←</button>
+          <div class="quick-center">MOVE</div>
+          <button class="qkey" type="button" data-dr="0" data-dc="3">→</button>
+        </div>
+        <div class="quick-row">
+          <button class="qkey" type="button" data-dr="2" data-dc="-2">↙︎</button>
+          <button class="qkey" type="button" data-dr="3" data-dc="0">↓</button>
+          <button class="qkey" type="button" data-dr="2" data-dc="2">↘︎</button>
+        </div>
+      </div>
+
+      <div class="side-group side-right">
+        <button id="undo-btn" type="button">↩️</button>
+        <button id="clear-btn" type="button">🗑️</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      Blu = mosse possibili · Arancione = mossa consigliata · Giallo = numero più alto · Swipe a destra = ↩️
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <p class="rules">
+      Regole: riempi tutte le 81 celle con numeri progressivi (1, 2, 3, ..., 81) senza ripetizioni.
+      1 può stare in qualsiasi cella; ogni numero successivo deve essere sulla stessa riga o colonna
+      saltando 2 celle (spostamento di 3), oppure in diagonale saltando 1 cella (spostamento di 2 in riga e colonna).
+    </p>
+
+  </div>
+</body>
+</html>
