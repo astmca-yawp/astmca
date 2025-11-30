@@ -196,3 +196,14 @@ button,
   70%  { transform: translateY(-2px) scale(1.0); }
   100% { transform: translateY(0)    scale(1.0); }
 }
+
+
+/* Timer display */
+.timer-box {
+  text-align: center;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.2rem;
+  color: #444;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}

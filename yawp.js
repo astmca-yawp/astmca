@@ -12,6 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const maxCells = size * size; // 81
   const cells = [];
 
+  let timerInterval = null;
+  let timerSeconds = 0;
+
+
   let maxNumber = 0;
   let lastRow = null;
   let lastCol = null;
@@ -48,6 +52,36 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateStatus(msg) {
     statusEl.textContent = msg || "";
   }
+
+  function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+      timerSeconds++;
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (!timerInterval) return;
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  function resetTimer() {
+    stopTimer();
+    timerSeconds = 0;
+    updateTimerDisplay();
+  }
+
+  function updateTimerDisplay() {
+    const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+    const s = String(timerSeconds % 60).padStart(2, '0');
+    const el = document.getElementById('timer');
+    if (el) {
+      el.textContent = `⏱️ ${m}:${s}`;
+    }
+  }
+
 
   function canMove(fromRow, fromCol, toRow, toCol) {
     const dr = toRow - fromRow;
@@ -125,6 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (maxNumber === 0) {
       maxNumber = 1;
+      resetTimer();
+      startTimer();
     } else if (maxNumber < maxCells) {
       maxNumber += 1;
     } else {
@@ -139,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (maxNumber === maxCells) {
       resetClasses();
       highlightHighest();
+      stopTimer();
       updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
     } else {
       updateAllowedCells();
@@ -582,6 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
     maxNumber = 0;
     lastRow = null;
     lastCol = null;
+    resetTimer();
     updateStatus("");
   });
 });
