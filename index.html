@@ -4,57 +4,67 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>ASTMCA v34</title>
 
-  <link rel="stylesheet" href="style.css?v=34" />
-  <link rel="apple-touch-icon" href="astmca_logo.png" />
+  <title>ASTMCA</title>
+
+  <link rel="stylesheet" href="style.css?v=33" />
 </head>
 
 <body>
+
   <div class="game-container">
+
     <h1 class="yawp-title" style="margin-bottom:4px;">
       <img src="astmca_logo.png" alt="ASTMCA" style="width:140px;height:auto;" />
     </h1>
 
-    <!-- TIMER + RECORD -->
     <div id="timer" class="timer-box">⏱️ 00:00</div>
     <div id="best-time" class="best-time">Miglior tempo: --:--</div>
 
-    <!-- GRID -->
     <div class="grid" id="grid"></div>
 
-    <!-- ARROWS -->
     <div class="arrows-container">
+
       <div class="arrow-row">
         <button class="arrow-btn" data-dir="up">▲</button>
       </div>
+
       <div class="arrow-row">
         <button class="arrow-btn" data-dir="left">◀</button>
         <button class="arrow-btn" data-dir="right">▶</button>
       </div>
+
       <div class="arrow-row">
         <button class="arrow-btn" data-dir="down">▼</button>
       </div>
+
     </div>
 
-    <!-- SIDE BUTTONS -->
     <div class="side-buttons left-side">
       <button id="solveBtn" class="side-btn">✔</button>
-      <button id="hintBtn" class="side-btn">?</button>
+      <button id="hintBtn" class="side-btn">💡</button>
     </div>
 
     <div class="side-buttons right-side">
       <button id="undoBtn" class="side-btn">↶</button>
-      <button id="clearBtn" class="side-btn">✖</button>
+      <button id="clearBtn" class="side-btn">🗑️</button>
     </div>
 
-    <!-- STATUS -->
     <div id="status" class="status"></div>
+
+    <p class="rules">
+      Blu = mosse possibili · Arancione = mossa consigliata · Giallo = numero più alto
+      · Swipe a destra = ↶<br><br>
+      Regole: riempi tutte le 81 celle con numeri progressivi (1, 2, 3, ..., 81)
+      senza ripetizioni. Ogni numero successivo deve essere sulla stessa riga o colonna
+      saltando 2 celle (spostamento di 3), oppure in diagonale saltando 1 cella
+      (spostamento di 2 in riga e colonna).
+    </p>
+
   </div>
 
-  <!-- VERSIONE -->
-  <div class="version-label">v34</div>
+  <div class="version-label">v33</div>
 
-  <script src="yawp.js?v=34"></script>
+  <script src="yawp.js?v=33"></script>
 </body>
 </html>

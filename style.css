@@ -12,10 +12,6 @@ body {
   text-align: center;
 }
 
-.yawp-title img {
-  filter: drop-shadow(0 2px 2px #00000030);
-}
-
 .grid {
   width: 100%;
   display: grid;
@@ -35,44 +31,39 @@ body {
   font-size: 1.4rem;
   font-family: 'Fredoka', sans-serif;
   user-select: none;
-  touch-action: manipulation;
 }
 
 .cell.allowed {
-  background: #d0ffd0;
+  background: #d0f0ff;
 }
 
 .cell.hint {
-  background: #fff7c2;
+  background: #ffe9a6;
 }
 
 .cell.highest {
-  background: #f6e499;
-  border: 2px solid #caa200;
+  background: #fff3a3;
+  border: 2px solid #d4b100;
 }
 
 .timer-box {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #444;
   margin-top: 6px;
-  margin-bottom: 4px;
+  font-size: 1.2rem;
 }
 
 .best-time {
   text-align: center;
+  margin-top: 2px;
   font-size: 0.9rem;
   color: #555;
-  margin-top: 2px;
-  margin-bottom: 6px;
 }
 
 .side-buttons {
   position: absolute;
-  top: 200px;
+  top: 220px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .left-side {
@@ -86,11 +77,11 @@ body {
 .side-btn {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
-  background: #46a6ff;
+  background: #3392ff;
+  border-radius: 10px;
+  border: none;
   color: white;
   font-size: 1.4rem;
-  border: none;
   box-shadow: 0 3px 5px #00000030;
 }
 
@@ -103,34 +94,37 @@ body {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin: 4px 0;
 }
 
 .arrow-btn {
   width: 52px;
   height: 52px;
-  font-size: 1.6rem;
-  border-radius: 14px;
+  background: #f4f4f4;
+  border-radius: 12px;
   border: none;
-  background: #fafafa;
-  box-shadow: 0 2px 5px #00000020;
+  font-size: 1.6rem;
+  box-shadow: 0 2px 5px #00000025;
 }
 
-.status {
-  margin-top: 12px;
-  min-height: 22px;
-  font-size: 0.95rem;
-  color: #333;
+.rules {
+  font-size: 0.85rem;
+  color: #444;
+  margin-top: 14px;
 }
 
-/* VERSIONE IN BASSO A DESTRA */
 .version-label {
   position: fixed;
   bottom: 6px;
-  right: 8px;
-  font-size: 0.75rem;
-  color: #444;
+  right: 10px;
   opacity: 0.7;
-  font-family: 'Fredoka', sans-serif;
+  font-size: 0.75rem;
+  color: #333;
   pointer-events: none;
+}
+
+.status {
+  margin-top: 10px;
+  height: 18px;
+  font-size: 0.9rem;
+  color: #333;
 }

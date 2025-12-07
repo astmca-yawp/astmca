@@ -1,276 +1,222 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const gridEl = document.getElementById("grid");
-  const statusEl = document.getElementById("status");
-  const undoBtn = document.getElementById("undoBtn");
-  const clearBtn = document.getElementById("clearBtn");
-  const hintBtn = document.getElementById("hintBtn");
-  const solveBtn = document.getElementById("solveBtn");
+const grid = document.getElementById("grid");
+const cells = [];
 
-  const cells = [];
+let maxNumber = 0;
+let lastRow = null;
+let lastCol = null;
 
-  let timerInterval = null;
-  let timerSeconds = 0;
-  let bestTimeSeconds = null;
+let historyStack = [];
 
-  let maxNumber = 0;
-  let lastRow = null;
-  let lastCol = null;
-  let undoStack = [];
+/* ---------------- TIMER + RECORD ---------------- */
 
-  const size = 9;
-  const maxCells = size * size;
+let timerSeconds = 0;
+let timerInterval = null;
+let bestTimeSeconds = null;
 
-  // ---------------- TIMER ----------------
-  function startTimer() {
-    if (timerInterval) return;
-    timerInterval = setInterval(() => {
-      timerSeconds++;
-      updateTimerDisplay();
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (!timerInterval) return;
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-
-  function resetTimer() {
-    stopTimer();
-    timerSeconds = 0;
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(() => {
+    timerSeconds++;
     updateTimerDisplay();
-  }
+  }, 1000);
+}
 
-  function formatTime(sec) {
-    const m = String(Math.floor(sec / 60)).padStart(2, "0");
-    const s = String(sec % 60).padStart(2, "0");
-    return `${m}:${s}`;
-  }
+function stopTimer() {
+  if (!timerInterval) return;
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
 
-  function updateTimerDisplay() {
-    const el = document.getElementById("timer");
-    if (el) {
-      el.textContent = `⏱️ ${formatTime(timerSeconds)}`;
-    }
-  }
+function resetTimer() {
+  stopTimer();
+  timerSeconds = 0;
+  updateTimerDisplay();
+}
 
-  function updateBestTimeDisplay() {
-    const el = document.getElementById("best-time");
-    if (!el) return;
-    if (bestTimeSeconds === null) {
-      el.textContent = "Miglior tempo: --:--";
-    } else {
-      el.textContent = "Miglior tempo: " + formatTime(bestTimeSeconds);
-    }
-  }
+function formatTime(sec) {
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return `${m}:${s}`;
+}
 
-  function loadBestTime() {
-    const stored = localStorage.getItem("astmca_best_time");
-    if (stored !== null) {
-      const val = Number(stored);
-      if (!Number.isNaN(val) && val > 0) {
-        bestTimeSeconds = val;
-      }
-    }
+function updateTimerDisplay() {
+  document.getElementById("timer").textContent = "⏱️ " + formatTime(timerSeconds);
+}
+
+function updateBestTimeDisplay() {
+  const el = document.getElementById("best-time");
+  if (bestTimeSeconds === null) el.textContent = "Miglior tempo: --:--";
+  else el.textContent = "Miglior tempo: " + formatTime(bestTimeSeconds);
+}
+
+function loadBestTime() {
+  const stored = localStorage.getItem("astmca_best_time");
+  if (stored) {
+    const val = Number(stored);
+    if (!isNaN(val)) bestTimeSeconds = val;
+  }
+  updateBestTimeDisplay();
+}
+
+function checkAndUpdateBestTime() {
+  if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
+    bestTimeSeconds = timerSeconds;
+    localStorage.setItem("astmca_best_time", String(bestTimeSeconds));
     updateBestTimeDisplay();
   }
+}
 
-  function checkAndUpdateBestTime() {
-    if (timerSeconds <= 0) return;
-    if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
-      bestTimeSeconds = timerSeconds;
-      localStorage.setItem("astmca_best_time", String(bestTimeSeconds));
-      updateBestTimeDisplay();
-    }
+/* ---------------- CREAZIONE GRIGLIA ---------------- */
+
+for (let r = 0; r < 9; r++) {
+  for (let c = 0; c < 9; c++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.row = r;
+    cell.dataset.col = c;
+
+    cell.addEventListener("click", () => handleCellClick(r, c, cell));
+    cells.push(cell);
+    grid.appendChild(cell);
   }
+}
 
-  // ---------------- UTIL ----------------
+/* ---------------- LOGICA MOSSE ---------------- */
 
-  function updateStatus(msg) {
-    statusEl.textContent = msg;
-  }
+function handleCellClick(row, col, cell) {
+  if (cell.textContent !== "" && !(maxNumber === 0 && cell.textContent === "")) return;
 
-  function coords(index) {
-    return {
-      row: Math.floor(index / size),
-      col: index % size,
-    };
-  }
-
-  function indexFrom(row, col) {
-    return row * size + col;
-  }
-
-  function canMove(fromRow, fromCol, toRow, toCol) {
-    const dRow = Math.abs(toRow - fromRow);
-    const dCol = Math.abs(toCol - fromCol);
-
-    if (dRow === 0 && dCol === 3) return true;
-    if (dRow === 3 && dCol === 0) return true;
-    if (dRow === 2 && dCol === 2) return true;
-
-    return false;
-  }
-
-  function highlightHighest() {
-    cells.forEach((c) => c.classList.remove("highest"));
-    if (maxNumber > 0) {
-      const cell = cells.find((c) => c.textContent == maxNumber);
-      if (cell) cell.classList.add("highest");
-    }
-  }
-
-  function computeAllowed() {
-    cells.forEach((c) => c.classList.remove("allowed"));
-
-    if (maxNumber === 0) {
-      cells.forEach((c) => c.classList.add("allowed"));
-      return;
-    }
-
-    let allowedCount = 0;
-
-    for (let i = 0; i < cells.length; i++) {
-      const { row, col } = coords(i);
-      if (cells[i].textContent !== "") continue;
-
-      if (canMove(lastRow, lastCol, row, col)) {
-        cells[i].classList.add("allowed");
-        allowedCount++;
-      }
-    }
-
-    return allowedCount;
-  }
-
-  function placeNextNumber(cell) {
-    if (cell.textContent !== "") return;
-
-    const idx = cells.indexOf(cell);
-    const { row, col } = coords(idx);
-
-    if (maxNumber > 0) {
-      if (!canMove(lastRow, lastCol, row, col)) return;
-    }
-
-    undoStack.push({
-      index: idx,
-      number: cell.textContent,
-      prevMax: maxNumber,
-      prevRow: lastRow,
-      prevCol: lastCol,
-    });
-
-    if (maxNumber === 0) {
-      maxNumber = 1;
-      resetTimer();
-      startTimer();
-    } else if (maxNumber < maxCells) {
-      maxNumber += 1;
-    } else {
-      return;
-    }
-
-    cell.textContent = String(maxNumber);
+  if (maxNumber === 0) {
+    maxNumber = 1;
+    cell.textContent = "1";
     lastRow = row;
     lastCol = col;
-
+    historyStack = [];
+    historyStack.push({ row, col, number: 1 });
+    resetTimer();
+    startTimer();
+    computeAllowed();
     highlightHighest();
-
-    const remainingAllowed = computeAllowed();
-
-    if (remainingAllowed === 0 && maxNumber < maxCells) {
-      highlightHighest();
-      stopTimer();
-      updateStatus(
-        "Bloccato! Nessuna mossa disponibile. Usa Suggerimento o Annulla."
-      );
-      return;
-    }
-
-    if (maxNumber === maxCells) {
-      resetClasses();
-      highlightHighest();
-      stopTimer();
-      checkAndUpdateBestTime();
-      updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
-    } else {
-      updateStatus(`Prosegui... (${maxNumber}/${maxCells})`);
-    }
+    updateStatus("Hai iniziato!");
+    return;
   }
 
-  function resetClasses() {
-    cells.forEach((c) => c.classList.remove("allowed", "hint"));
-  }
+  if (!cell.classList.contains("allowed")) return;
 
-  // ---------------- BUILD GRID ----------------
+  maxNumber++;
+  cell.textContent = String(maxNumber);
+  lastRow = row;
+  lastCol = col;
 
-  for (let i = 0; i < maxCells; i++) {
-    const c = document.createElement("div");
-    c.className = "cell";
-    c.addEventListener("click", () => placeNextNumber(c));
-    gridEl.appendChild(c);
-    cells.push(c);
-  }
+  historyStack.push({ row, col, number: maxNumber });
 
   computeAllowed();
-
-  // ---------------- UNDO ----------------
-
-  undoBtn.addEventListener("click", () => {
-    if (undoStack.length === 0) return;
-    const st = undoStack.pop();
-
-    if (st.number === "") cells[st.index].textContent = "";
-    else cells[st.index].textContent = st.number;
-
-    maxNumber = st.prevMax;
-    lastRow = st.prevRow;
-    lastCol = st.prevCol;
-
-    highlightHighest();
-    computeAllowed();
-    updateStatus("");
-  });
-
-  // ---------------- CLEAR ----------------
-
-  clearBtn.addEventListener("click", () => {
-    cells.forEach((c) => {
-      c.textContent = "";
-      c.classList.remove("allowed", "hint", "highest");
-    });
-    maxNumber = 0;
-    lastRow = null;
-    lastCol = null;
-    resetTimer();
-    updateStatus("");
-    computeAllowed();
-  });
-
-  // ---------------- HINT ----------------
-
-  hintBtn.addEventListener("click", () => {
-    resetClasses();
-    computeAllowed();
-
-    const allowedCells = cells.filter((c) =>
-      c.classList.contains("allowed")
-    );
-
-    if (allowedCells.length === 0) {
-      updateStatus("Nessun suggerimento disponibile.");
-      return;
-    }
-
-    allowedCells.forEach((c) => c.classList.add("hint"));
-    updateStatus("Ecco un suggerimento!");
-  });
-
-  // ---------------- LOAD RECORD & INIT ----------------
-
-  loadBestTime();
-  updateTimerDisplay();
-  updateStatus("");
   highlightHighest();
+  updateStatus(`(${maxNumber}/81)`);
+
+  if (maxNumber === 81) {
+    stopTimer();
+    checkAndUpdateBestTime();
+    updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
+  }
+}
+
+function computeAllowed() {
+  cells.forEach(c => c.classList.remove("allowed"));
+
+  if (maxNumber === 0) return;
+
+  const moves = [];
+
+  const jumpMoves = [
+    [0, 3], [0, -3],
+    [3, 0], [-3, 0],
+    [2, 2], [2, -2],
+    [-2, 2], [-2, -2],
+  ];
+
+  for (const [dr, dc] of jumpMoves) {
+    const nr = lastRow + dr;
+    const nc = lastCol + dc;
+    if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+      const idx = nr * 9 + nc;
+      if (cells[idx].textContent === "") moves.push(cells[idx]);
+    }
+  }
+
+  moves.forEach(m => m.classList.add("allowed"));
+
+  if (moves.length === 0 && maxNumber > 0 && maxNumber < 81) {
+    stopTimer();
+    updateStatus("Bloccato! Nessuna mossa disponibile.");
+  }
+}
+
+/* ---------------- UNDO ---------------- */
+
+document.getElementById("undoBtn").addEventListener("click", () => {
+  if (historyStack.length <= 1) return;
+
+  const last = historyStack.pop();
+  const idx = last.row * 9 + last.col;
+  cells[idx].textContent = "";
+
+  maxNumber--;
+
+  const prev = historyStack[historyStack.length - 1];
+  lastRow = prev.row;
+  lastCol = prev.col;
+
+  computeAllowed();
+  highlightHighest();
+  updateStatus(`(${maxNumber}/81)`);
 });
+
+/* ---------------- CLEAR ---------------- */
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  cells.forEach(c => {
+    c.textContent = "";
+    c.classList.remove("allowed", "hint", "highest");
+  });
+  maxNumber = 0;
+  lastRow = null;
+  lastCol = null;
+  historyStack = [];
+  resetTimer();
+  updateStatus("");
+});
+
+/* ---------------- SUGGERIMENTO ---------------- */
+
+document.getElementById("hintBtn").addEventListener("click", () => {
+  const allowed = cells.filter(c => c.classList.contains("allowed"));
+  if (allowed.length > 0) {
+    allowed[0].classList.add("hint");
+    updateStatus("Mossa consigliata evidenziata.");
+  }
+});
+
+/* ---------------- RISOLUTORE ---------------- */
+
+document.getElementById("solveBtn").addEventListener("click", () => {
+  updateStatus("Soluzione automatica non disponibile (solo manuale).");
+});
+
+/* ---------------- VARIE ---------------- */
+
+function highlightHighest() {
+  cells.forEach(c => c.classList.remove("highest"));
+  if (maxNumber > 0) {
+    const pos = historyStack[historyStack.length - 1];
+    const idx = pos.row * 9 + pos.col;
+    cells[idx].classList.add("highest");
+  }
+}
+
+function updateStatus(msg) {
+  document.getElementById("status").textContent = msg;
+}
+
+loadBestTime();
+updateTimerDisplay();
