@@ -1,130 +1,209 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f4f4;
   margin: 0;
-  background: #f7f1e6;
-  font-family: 'Fredoka', sans-serif;
-  -webkit-tap-highlight-color: transparent;
+  padding: 0;
 }
 
-.game-container {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 10px;
+.app {
+  max-width: 520px;
+  margin: 12px auto;
+  padding: 12px;
+  background: #F7F1E6;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* TITLE */
+.yawp-title {
   text-align: center;
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-size: 2.4rem;
+  letter-spacing: 1px;
+  margin: 0 0 6px;
+  color: #333;
 }
 
+/* Griglia */
 .grid {
-  width: 100%;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  gap: 4px;
-  margin-top: 10px;
+  gap: 3px;
+  margin-top: 8px;
 }
 
-.cell {
+/* Celle come pulsanti, font numerico come YaWp */
+.grid button {
   width: 100%;
-  aspect-ratio: 1;
-  background: white;
-  border-radius: 6px;
+  aspect-ratio: 1 / 1;
+  text-align: center;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.9rem, 3.6vw, 1.25rem);
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 0;
+  background: #fff;
+}
+
+/* bordi tipo sudoku */
+.grid button[data-row-border="true"] {
+  border-top: 2px solid #000;
+}
+
+.grid button[data-col-border="true"] {
+  border-left: 2px solid #000;
+}
+
+.grid button:focus {
+  outline: 2px solid #007bff;
+}
+
+/* celle dove è possibile mettere il prossimo numero */
+.grid button.allowed {
+  background: #eef3ff;
+}
+
+/* suggerimento specifico */
+.grid button.hint {
+  background: #ffeecf;
+}
+
+/* cella con il numero più alto */
+.grid button.highest {
+  background: #fff8a6 !important;
+}
+
+/* Layout controlli B: [✔️ 💡] [frecce] [↩️ 🗑️] */
+.controls-layout {
+  margin-top: 12px;
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  font-size: 1.4rem;
-  font-family: 'Fredoka', sans-serif;
-  user-select: none;
+  gap: 10px;
+  flex-wrap: nowrap;
 }
 
-.cell.allowed {
-  background: #d0f0ff;
+/* Gruppi laterali di icone */
+.side-group {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
-.cell.hint {
-  background: #ffe9a6;
-}
-
-.cell.highest {
-  background: #fff3a3;
-  border: 2px solid #d4b100;
-}
-
-.timer-box {
-  margin-top: 6px;
+/* Bottoni laterali piccoli */
+.side-group button {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #007bff;
+  color: white;
   font-size: 1.2rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.best-time {
-  text-align: center;
-  margin-top: 2px;
-  font-size: 0.9rem;
+/* Quick keys compatte */
+.quick-keys {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.quick-row {
+  display: flex;
+  gap: 4px;
+}
+
+.qkey {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: none;
+  background: #e9edf7;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.qkey:active {
+  background: #c7d3f5;
+}
+
+.quick-center {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: #777;
+}
+
+/* Niente media query che rompe il layout: resta sempre row */
+
+/* Legend & testo */
+.legend {
+  margin-top: 8px;
+  font-size: 0.75rem;
   color: #555;
 }
 
-.side-buttons {
-  position: absolute;
-  top: 220px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.left-side {
-  left: 10px;
-}
-
-.right-side {
-  right: 10px;
-}
-
-.side-btn {
-  width: 48px;
-  height: 48px;
-  background: #3392ff;
-  border-radius: 10px;
-  border: none;
-  color: white;
-  font-size: 1.4rem;
-  box-shadow: 0 3px 5px #00000030;
-}
-
-.arrows-container {
-  margin-top: 20px;
-  margin-bottom: 10px;
-}
-
-.arrow-row {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.arrow-btn {
-  width: 52px;
-  height: 52px;
-  background: #f4f4f4;
-  border-radius: 12px;
-  border: none;
-  font-size: 1.6rem;
-  box-shadow: 0 2px 5px #00000025;
+.status {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #333;
 }
 
 .rules {
-  font-size: 0.85rem;
-  color: #444;
-  margin-top: 14px;
-}
-
-.version-label {
-  position: fixed;
-  bottom: 6px;
-  right: 10px;
-  opacity: 0.7;
-  font-size: 0.75rem;
-  color: #333;
-  pointer-events: none;
-}
-
-.status {
   margin-top: 10px;
-  height: 18px;
-  font-size: 0.9rem;
-  color: #333;
+  color: #666;
+  font-size: 0.75rem;
+}
+
+/* Tocco iOS */
+button,
+.grid button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+
+.yawp-title img {
+  display: block;
+  margin: 0 auto;
+  animation: logo-bounce 0.9s ease-out 1;
+  transform-origin: center center;
+}
+
+.yawp-title img:hover {
+  transform: scale(1.03);
+}
+
+@keyframes logo-bounce {
+  0%   { transform: translateY(-12px) scale(0.96); opacity: 0; }
+  40%  { transform: translateY(4px)  scale(1.02); opacity: 1; }
+  70%  { transform: translateY(-2px) scale(1.0); }
+  100% { transform: translateY(0)    scale(1.0); }
+}
+
+
+/* Timer display */
+.timer-box {
+  text-align: center;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.2rem;
+  color: #444;
+  margin-top: 6px;
+  margin-bottom: 4px;
 }
