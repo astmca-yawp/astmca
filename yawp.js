@@ -12,66 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const maxCells = size * size; // 81
   const cells = [];
 
-  const levelSelect = document.getElementById("level-select");
-  const timerEl = document.getElementById("timer");
-  const bestTimeEl = document.getElementById("best-time");
-
-  const LEVEL_COUNT = 7;
-  let currentLevel = levelSelect ? parseInt(levelSelect.value, 10) || 1 : 1;
-
-  let timerInterval = null;
-  let timerSeconds = 0;
-  let bestTimeSeconds = null;
-
-  function levelBestTimeKey() {
-    return "yawpBestTimeSeconds_L" + String(currentLevel);
-  }
-
-  function formatSeconds(totalSeconds) {
-    const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const s = String(totalSeconds % 60).padStart(2, '0');
-    return m + ":" + s;
-  }
-
-  function updateTimerDisplay() {
-    if (!timerEl) return;
-    timerEl.textContent = "⏱️ " + formatSeconds(timerSeconds);
-  }
-
-  function loadBestTimeForLevel() {
-    const raw = localStorage.getItem(levelBestTimeKey());
-    bestTimeSeconds = raw ? parseInt(raw, 10) : null;
-  }
-
-  function updateBestTimeDisplay() {
-    if (!bestTimeEl) return;
-    if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
-      bestTimeEl.textContent = "🏆 Livello " + currentLevel + ": --:--";
-    } else {
-      bestTimeEl.textContent = "🏆 Livello " + currentLevel + ": " + formatSeconds(bestTimeSeconds);
-    }
-  }
-
-  function startTimer() {
-    if (timerInterval) return;
-    timerInterval = setInterval(() => {
-      timerSeconds += 1;
-      updateTimerDisplay();
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (!timerInterval) return;
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-
-  function resetTimer() {
-    stopTimer();
-    timerSeconds = 0;
-    updateTimerDisplay();
-  }
-
   let maxNumber = 0;
   let lastRow = null;
   let lastCol = null;
@@ -185,8 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (maxNumber === 0) {
       maxNumber = 1;
-      resetTimer();
-      startTimer();
     } else if (maxNumber < maxCells) {
       maxNumber += 1;
     } else {
@@ -201,20 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (maxNumber === maxCells) {
       resetClasses();
       highlightHighest();
-      stopTimer();
-
-      if (timerSeconds > 0) {
-        if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
-          bestTimeSeconds = timerSeconds;
-          localStorage.setItem(levelBestTimeKey(), String(bestTimeSeconds));
-          updateBestTimeDisplay();
-          updateStatus("Complimenti! Hai riempito tutte le 81 celle in " + formatSeconds(timerSeconds) + ". Nuovo record per il livello " + currentLevel + "!");
-        } else {
-          updateStatus("Complimenti! Hai riempito tutte le 81 celle in " + formatSeconds(timerSeconds) + ". Miglior tempo livello " + currentLevel + ": " + formatSeconds(bestTimeSeconds) + ".");
-        }
-      } else {
-        updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
-      }
+      updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
     } else {
       updateAllowedCells();
     }
@@ -649,26 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  if (levelSelect) {
-    levelSelect.addEventListener("change", () => {
-      const newLevel = parseInt(levelSelect.value, 10);
-      currentLevel = isNaN(newLevel) ? 1 : newLevel;
-      loadBestTimeForLevel();
-      updateBestTimeDisplay();
-
-      // reset griglia e timer quando si cambia livello
-      cells.forEach(c => {
-        c.textContent = "";
-        c.classList.remove("allowed", "hint", "highest");
-      });
-      maxNumber = 0;
-      lastRow = null;
-      lastCol = null;
-      resetTimer();
-      updateStatus("Hai selezionato il livello " + currentLevel + ". Inserisci l'1 per iniziare.");
-    });
-  }
-
   clearBtn.addEventListener("click", () => {
     cells.forEach(c => {
       c.textContent = "";
@@ -677,13 +582,6 @@ document.addEventListener("DOMContentLoaded", () => {
     maxNumber = 0;
     lastRow = null;
     lastCol = null;
-    resetTimer();
     updateStatus("");
   });
-
-
-  // inizializza best time e timer all'avvio
-  loadBestTimeForLevel();
-  updateBestTimeDisplay();
-  updateTimerDisplay();
 });

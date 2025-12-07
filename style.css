@@ -196,25 +196,3 @@ button,
   70%  { transform: translateY(-2px) scale(1.0); }
   100% { transform: translateY(0)    scale(1.0); }
 }
-
-
-.best-time {
-  font-size: 0.9rem;
-}
-
-.level-box {
-  margin-top: 4px;
-  text-align: center;
-  font-size: 0.8rem;
-}
-
-.level-box label {
-  margin-right: 4px;
-}
-
-.level-box select {
-  padding: 2px 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 0.8rem;
-}
