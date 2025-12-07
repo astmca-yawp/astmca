@@ -14,7 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let timerInterval = null;
   let timerSeconds = 0;
-
+  let bestTimeSeconds = localStorage.getItem("yawpBestTimeSeconds")
+    ? parseInt(localStorage.getItem("yawpBestTimeSeconds"), 10)
+    : null;
 
   let maxNumber = 0;
   let lastRow = null;
@@ -73,12 +75,26 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTimerDisplay();
   }
 
+  function formatSeconds(totalSeconds) {
+    const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const s = String(totalSeconds % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
   function updateTimerDisplay() {
-    const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-    const s = String(timerSeconds % 60).padStart(2, '0');
     const el = document.getElementById('timer');
     if (el) {
-      el.textContent = `⏱️ ${m}:${s}`;
+      el.textContent = `⏱️ ${formatSeconds(timerSeconds)}`;
+    }
+  }
+
+  function updateBestTimeDisplay() {
+    const el = document.getElementById('best-time');
+    if (!el) return;
+    if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
+      el.textContent = "🏆 Miglior tempo: --:--";
+    } else {
+      el.textContent = "🏆 Miglior tempo: " + formatSeconds(bestTimeSeconds);
     }
   }
 
@@ -172,11 +188,25 @@ document.addEventListener("DOMContentLoaded", () => {
     lastCol = col;
     vibrate(20);
 
+    // piccola animazione sulla cella appena compilata
+    cell.classList.add("just-placed");
+    setTimeout(() => {
+      cell.classList.remove("just-placed");
+    }, 120);
+
     if (maxNumber === maxCells) {
       resetClasses();
       highlightHighest();
       stopTimer();
-      updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
+
+      if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
+        bestTimeSeconds = timerSeconds;
+        localStorage.setItem("yawpBestTimeSeconds", String(bestTimeSeconds));
+        updateBestTimeDisplay();
+        updateStatus("Complimenti! Hai riempito tutte le 81 celle in " + formatSeconds(timerSeconds) + ". Nuovo record!");
+      } else {
+        updateStatus("Complimenti! Hai riempito tutte le 81 celle in " + formatSeconds(timerSeconds) + ". Miglior tempo: " + formatSeconds(bestTimeSeconds) + ".");
+      }
     } else {
       updateAllowedCells();
     }
@@ -622,4 +652,8 @@ document.addEventListener("DOMContentLoaded", () => {
     resetTimer();
     updateStatus("");
   });
+
+  // inizializza le view di timer e best-time
+  updateTimerDisplay();
+  updateBestTimeDisplay();
 });

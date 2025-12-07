@@ -48,6 +48,15 @@ body {
   border: 1px solid #ccc;
   padding: 0;
   background: #fff;
+  transition: background-color 0.18s ease-out,
+              transform 0.08s ease-out,
+              box-shadow 0.12s ease-out;
+}
+
+/* leggera animazione sulla cella appena cliccata */
+.grid button.just-placed {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
 }
 
 /* bordi tipo sudoku */
