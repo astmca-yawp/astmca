@@ -51,27 +51,22 @@ body {
   border: 2px solid #caa200;
 }
 
-/* TIMER */
 .timer-box {
   text-align: center;
-  font-family: 'Fredoka', sans-serif;
   font-size: 1.2rem;
   color: #444;
   margin-top: 6px;
   margin-bottom: 4px;
 }
 
-/* BEST TIME */
 .best-time {
   text-align: center;
-  font-family: 'Fredoka', sans-serif;
   font-size: 0.9rem;
   color: #555;
   margin-top: 2px;
   margin-bottom: 6px;
 }
 
-/* BUTTONS */
 .side-buttons {
   position: absolute;
   top: 200px;
@@ -97,10 +92,8 @@ body {
   font-size: 1.4rem;
   border: none;
   box-shadow: 0 3px 5px #00000030;
-  user-select: none;
 }
 
-/* ARROWS */
 .arrows-container {
   margin-top: 20px;
   margin-bottom: 10px;
@@ -123,10 +116,21 @@ body {
   box-shadow: 0 2px 5px #00000020;
 }
 
-/* STATUS */
 .status {
   margin-top: 12px;
   min-height: 22px;
   font-size: 0.95rem;
   color: #333;
+}
+
+/* VERSIONE IN BASSO A DESTRA */
+.version-label {
+  position: fixed;
+  bottom: 6px;
+  right: 8px;
+  font-size: 0.75rem;
+  color: #444;
+  opacity: 0.7;
+  font-family: 'Fredoka', sans-serif;
+  pointer-events: none;
 }
