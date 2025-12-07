@@ -48,15 +48,6 @@ body {
   border: 1px solid #ccc;
   padding: 0;
   background: #fff;
-  transition: background-color 0.18s ease-out,
-              transform 0.08s ease-out,
-              box-shadow 0.12s ease-out;
-}
-
-/* leggera animazione sulla cella appena cliccata */
-.grid button.just-placed {
-  transform: scale(1.06);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
 }
 
 /* bordi tipo sudoku */
@@ -207,12 +198,23 @@ button,
 }
 
 
-/* Timer display */
-.timer-box {
+.best-time {
+  font-size: 0.9rem;
+}
+
+.level-box {
+  margin-top: 4px;
   text-align: center;
-  font-family: 'Fredoka', sans-serif;
-  font-size: 1.2rem;
-  color: #444;
-  margin-top: 6px;
-  margin-bottom: 4px;
+  font-size: 0.8rem;
+}
+
+.level-box label {
+  margin-right: 4px;
+}
+
+.level-box select {
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.8rem;
 }
