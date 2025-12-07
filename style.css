@@ -1,204 +1,57 @@
-* {
-  box-sizing: border-box;
-}
-
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f4f4f4;
   margin: 0;
-  padding: 0;
-}
-
-.app {
-  max-width: 520px;
-  margin: 12px auto;
-  padding: 12px;
-  background: #F7F1E6;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
-
-/* TITLE */
-.yawp-title {
-  text-align: center;
-  font-family: 'Montserrat Alternates', sans-serif;
-  font-size: 2.4rem;
-  letter-spacing: 1px;
-  margin: 0 0 6px;
-  color: #333;
-}
-
-/* Griglia */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 3px;
-  margin-top: 8px;
-}
-
-/* Celle come pulsanti, font numerico come YaWp */
-.grid button {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  text-align: center;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-weight: 600;
-  font-size: clamp(0.9rem, 3.6vw, 1.25rem);
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 0;
-  background: #fff;
-}
-
-/* bordi tipo sudoku */
-.grid button[data-row-border="true"] {
-  border-top: 2px solid #000;
-}
-
-.grid button[data-col-border="true"] {
-  border-left: 2px solid #000;
-}
-
-.grid button:focus {
-  outline: 2px solid #007bff;
-}
-
-/* celle dove è possibile mettere il prossimo numero */
-.grid button.allowed {
-  background: #eef3ff;
-}
-
-/* suggerimento specifico */
-.grid button.hint {
-  background: #ffeecf;
-}
-
-/* cella con il numero più alto */
-.grid button.highest {
-  background: #fff8a6 !important;
-}
-
-/* Layout controlli B: [✔️ 💡] [frecce] [↩️ 🗑️] */
-.controls-layout {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-
-/* Gruppi laterali di icone */
-.side-group {
-  display: flex;
-  flex-direction: row;
-  gap: 6px;
-  flex: 0 0 auto;
-}
-
-/* Bottoni laterali piccoli */
-.side-group button {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: #007bff;
-  color: white;
-  font-size: 1.2rem;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Quick keys compatte */
-.quick-keys {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.quick-row {
-  display: flex;
-  gap: 4px;
-}
-
-.qkey {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: none;
-  background: #e9edf7;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.qkey:active {
-  background: #c7d3f5;
-}
-
-.quick-center {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6rem;
-  color: #777;
-}
-
-/* Niente media query che rompe il layout: resta sempre row */
-
-/* Legend & testo */
-.legend {
-  margin-top: 8px;
-  font-size: 0.75rem;
-  color: #555;
-}
-
-.status {
-  margin-top: 6px;
-  font-size: 0.8rem;
-  color: #333;
-}
-
-.rules {
-  margin-top: 10px;
-  color: #666;
-  font-size: 0.75rem;
-}
-
-/* Tocco iOS */
-button,
-.grid button {
+  background: #f7f1e6;
+  font-family: 'Fredoka', sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
-
+.game-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 10px;
+  text-align: center;
+}
 
 .yawp-title img {
-  display: block;
-  margin: 0 auto;
-  animation: logo-bounce 0.9s ease-out 1;
-  transform-origin: center center;
+  filter: drop-shadow(0 2px 2px #00000030);
 }
 
-.yawp-title img:hover {
-  transform: scale(1.03);
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 4px;
+  margin-top: 10px;
 }
 
-@keyframes logo-bounce {
-  0%   { transform: translateY(-12px) scale(0.96); opacity: 0; }
-  40%  { transform: translateY(4px)  scale(1.02); opacity: 1; }
-  70%  { transform: translateY(-2px) scale(1.0); }
-  100% { transform: translateY(0)    scale(1.0); }
+.cell {
+  width: 100%;
+  aspect-ratio: 1;
+  background: white;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.4rem;
+  font-family: 'Fredoka', sans-serif;
+  user-select: none;
+  touch-action: manipulation;
 }
 
+.cell.allowed {
+  background: #d0ffd0;
+}
 
-/* Timer display */
+.cell.hint {
+  background: #fff7c2;
+}
+
+.cell.highest {
+  background: #f6e499;
+  border: 2px solid #caa200;
+}
+
+/* TIMER */
 .timer-box {
   text-align: center;
   font-family: 'Fredoka', sans-serif;
@@ -206,4 +59,74 @@ button,
   color: #444;
   margin-top: 6px;
   margin-bottom: 4px;
+}
+
+/* BEST TIME */
+.best-time {
+  text-align: center;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+/* BUTTONS */
+.side-buttons {
+  position: absolute;
+  top: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.left-side {
+  left: 10px;
+}
+
+.right-side {
+  right: 10px;
+}
+
+.side-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #46a6ff;
+  color: white;
+  font-size: 1.4rem;
+  border: none;
+  box-shadow: 0 3px 5px #00000030;
+  user-select: none;
+}
+
+/* ARROWS */
+.arrows-container {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.arrow-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 4px 0;
+}
+
+.arrow-btn {
+  width: 52px;
+  height: 52px;
+  font-size: 1.6rem;
+  border-radius: 14px;
+  border: none;
+  background: #fafafa;
+  box-shadow: 0 2px 5px #00000020;
+}
+
+/* STATUS */
+.status {
+  margin-top: 12px;
+  min-height: 22px;
+  font-size: 0.95rem;
+  color: #333;
 }
