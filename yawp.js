@@ -8,21 +8,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const quickKeys = document.querySelectorAll(".qkey");
   const appEl = document.querySelector(".app");
 
+  const timerEl = document.getElementById("timer");
+  const bestTimeEl = document.getElementById("best-time");
+  const levelSelect = document.getElementById("level-select");
+
+  const LEVEL_COUNT = 7;
+  const FIXED_BY_LEVEL = {
+    1: [],
+    2: [5],
+    3: [5, 8],
+    4: [5, 8, 9],
+    5: [5, 8, 9, 14],
+    6: [5, 8, 9, 14, 17, 21],
+    7: [5, 8, 9, 14, 17, 21, 22]
+  };
+
+  let unlockedLevel = localStorage.getItem("yawpUnlockedLevel")
+    ? parseInt(localStorage.getItem("yawpUnlockedLevel"), 10)
+    : 1;
+  if (isNaN(unlockedLevel) || unlockedLevel < 1) unlockedLevel = 1;
+  if (unlockedLevel > LEVEL_COUNT) unlockedLevel = LEVEL_COUNT;
+
+  let currentLevel = unlockedLevel;
+
+  let timerInterval = null;
+  let timerSeconds = 0;
+  let bestTimeSeconds = null;
+  let hasStarted = false;
+
+
+
   const size = 9;
   const maxCells = size * size; // 81
   const cells = [];
-
-  const levelSelect = document.getElementById("level-select");
-  const timerEl = document.getElementById("timer");
-  const bestTimeEl = document.getElementById("best-time");
-
-  const LEVEL_MAX = [0, 5, 8, 9, 14, 17, 21, 22]; // indice 1..7
-
-  let currentLevel = levelSelect ? parseInt(levelSelect.value, 10) || 1 : 1;
-  let bestTimeSeconds = null;
-  let hasStarted = false;
-  let timerInterval = null;
-  let timerSeconds = 0;
 
   let maxNumber = 0;
   let lastRow = null;
@@ -62,13 +80,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function levelBestTimeKey() {
-    return "yawpBestTimeSeconds_L" + String(currentLevel);
+  function levelBestTimeKey(level) {
+    return "yawpBestTimeSeconds_L" + String(level);
   }
 
   function formatSeconds(totalSeconds) {
-    const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const s = String(totalSeconds % 60).padStart(2, '0');
+    const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const s = String(totalSeconds % 60).padStart(2, "0");
     return m + ":" + s;
   }
 
@@ -77,8 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
     timerEl.textContent = "⏱️ " + formatSeconds(timerSeconds);
   }
 
-  function loadBestTimeForLevel() {
-    const raw = localStorage.getItem(levelBestTimeKey());
+  function loadBestTimeForLevel(level) {
+    const raw = localStorage.getItem(levelBestTimeKey(level));
     bestTimeSeconds = raw ? parseInt(raw, 10) : null;
   }
 
@@ -94,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function startTimer() {
     if (timerInterval) return;
     timerInterval = setInterval(() => {
-      timerSeconds++;
+      timerSeconds += 1;
       updateTimerDisplay();
     }, 1000);
   }
@@ -109,6 +127,11 @@ document.addEventListener("DOMContentLoaded", () => {
     stopTimer();
     timerSeconds = 0;
     updateTimerDisplay();
+  }
+
+  function pulseCell(cell) {
+    cell.classList.add("just-placed");
+    setTimeout(() => cell.classList.remove("just-placed"), 120);
   }
 
   function canMove(fromRow, fromCol, toRow, toCol) {
@@ -152,7 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (inBounds(r, c)) {
         const idx = indexFromRowCol(r, c);
         const cell = cells[idx];
-        if (cell.textContent.trim() === "") {
+        const next = maxNumber + 1;
+        if (cell.textContent.trim() === "" || (cell.dataset.fixed === "true" && cell.textContent.trim() === String(next))) {
           cell.classList.add("allowed");
           anyAllowed = true;
         }
@@ -176,12 +200,68 @@ document.addEventListener("DOMContentLoaded", () => {
     const row = parseInt(cell.dataset.row, 10);
     const col = parseInt(cell.dataset.col, 10);
 
-    if (cell.textContent.trim() !== "") return;
+    const isFixed = cell.dataset.fixed === "true";
+    const cellVal = cell.textContent.trim();
 
-    if (cell.dataset.fixed === "true") {
-      // numeri fissi: non modificabili
+    // Se la cella è fissa, la si può "usare" solo quando è esattamente il prossimo numero
+    if (isFixed) {
+      const next = maxNumber + 1;
+      if (cellVal !== String(next)) {
+        invalidMoveFeedback();
+        return;
+      }
+      if (maxNumber > 0 && !canMove(lastRow, lastCol, row, col)) {
+        invalidMoveFeedback();
+        return;
+      }
+
+      if (!hasStarted) {
+        hasStarted = true;
+        resetTimer();
+        startTimer();
+      }
+
+      maxNumber = next;
+      lastRow = row;
+      lastCol = col;
+      vibrate(20);
+      pulseCell(cell);
+
+      if (maxNumber === maxCells) {
+        resetClasses();
+        highlightHighest();
+        stopTimer();
+
+        if (timerSeconds > 0) {
+          if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
+            bestTimeSeconds = timerSeconds;
+            localStorage.setItem(levelBestTimeKey(currentLevel), String(bestTimeSeconds));
+            updateBestTimeDisplay();
+            updateStatus("Completato! Tempo " + formatSeconds(timerSeconds) + ". Nuovo record per il livello " + currentLevel + "!");
+          } else {
+            updateStatus("Completato! Tempo " + formatSeconds(timerSeconds) + ". Miglior tempo livello " + currentLevel + ": " + formatSeconds(bestTimeSeconds) + ".");
+          }
+        } else {
+          updateStatus("Completato!");
+        }
+
+        // sblocco livello successivo
+        if (currentLevel === unlockedLevel && unlockedLevel < LEVEL_COUNT) {
+          unlockedLevel += 1;
+          localStorage.setItem("yawpUnlockedLevel", String(unlockedLevel));
+          updateLevelSelectUI();
+          updateStatus("Hai sbloccato il livello " + unlockedLevel + "!");
+        }
+
+        return;
+      }
+
+      updateAllowedCells();
       return;
     }
+
+    // Non fissa: se già piena, non fare nulla
+    if (cellVal !== "") return;
 
     if (maxNumber > 0) {
       if (!canMove(lastRow, lastCol, row, col)) {
@@ -208,6 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastRow = row;
     lastCol = col;
     vibrate(20);
+    pulseCell(cell);
 
     if (maxNumber === maxCells) {
       resetClasses();
@@ -217,19 +298,29 @@ document.addEventListener("DOMContentLoaded", () => {
       if (timerSeconds > 0) {
         if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
           bestTimeSeconds = timerSeconds;
-          localStorage.setItem(levelBestTimeKey(), String(bestTimeSeconds));
+          localStorage.setItem(levelBestTimeKey(currentLevel), String(bestTimeSeconds));
           updateBestTimeDisplay();
-          updateStatus("Complimenti! Hai riempito tutte le 81 celle in " + formatSeconds(timerSeconds) + ". Nuovo record per il livello " + currentLevel + "!");
+          updateStatus("Completato! Tempo " + formatSeconds(timerSeconds) + ". Nuovo record per il livello " + currentLevel + "!");
         } else {
-          updateStatus("Complimenti! Hai riempito tutte le 81 celle in " + formatSeconds(timerSeconds) + ". Miglior tempo livello " + currentLevel + ": " + formatSeconds(bestTimeSeconds) + ".");
+          updateStatus("Completato! Tempo " + formatSeconds(timerSeconds) + ". Miglior tempo livello " + currentLevel + ": " + formatSeconds(bestTimeSeconds) + ".");
         }
       } else {
-        updateStatus("Complimenti! Hai riempito tutte le 81 celle.");
+        updateStatus("Completato!");
       }
+
+      if (currentLevel === unlockedLevel && unlockedLevel < LEVEL_COUNT) {
+        unlockedLevel += 1;
+        localStorage.setItem("yawpUnlockedLevel", String(unlockedLevel));
+        updateLevelSelectUI();
+        updateStatus("Hai sbloccato il livello " + unlockedLevel + "!");
+      }
+
+      return;
     } else {
       updateAllowedCells();
     }
   }
+
 
   function parseCurrentStateAllowPrefix() {
     let currentMax = 0;
@@ -372,84 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return { bestPath, bestLen };
   }
 
-  
-
-  function generateLevelLayout(level) {
-    const requiredMax = LEVEL_MAX[level] || 0;
-
-    // svuota completamente la griglia
-    cells.forEach(c => {
-      c.textContent = "";
-      c.classList.remove("allowed", "hint", "highest", "fixed");
-      delete c.dataset.fixed;
-    });
-    maxNumber = 0;
-    lastRow = null;
-    lastCol = null;
-    hasStarted = false;
-    resetTimer();
-
-    if (!requiredMax) {
-      // livello senza numeri fissi
-      highlightHighest();
-      updateAllowedCells();
-      updateStatus("Livello " + level + " senza numeri fissi. Inserisci l'1 per iniziare.");
-      return;
-    }
-
-    let path = null;
-
-    // prova finché non troviamo un percorso abbastanza lungo
-    while (!path) {
-      const startRow = Math.floor(Math.random() * size);
-      const startCol = Math.floor(Math.random() * size);
-
-      const visited = Array.from({ length: size }, () =>
-        Array(size).fill(false)
-      );
-      const positions = new Array(maxCells);
-
-      visited[startRow][startCol] = true;
-      positions[0] = { row: startRow, col: startCol };
-
-      const state = {
-        prefixK: 1,
-        positions,
-        visited,
-        currentMax: 1
-      };
-
-      const { bestPath, bestLen } = solveFromState(state);
-      if (bestLen >= requiredMax) {
-        path = bestPath;
-      }
-    }
-
-    // ora path contiene almeno requiredMax passi validi
-    for (let n = 1; n <= requiredMax; n++) {
-      const { row, col } = path[n - 1];
-      const idx = indexFromRowCol(row, col);
-      const cell = cells[idx];
-      cell.textContent = String(n);
-      cell.dataset.fixed = "true";
-      cell.classList.add("fixed");
-    }
-
-    maxNumber = requiredMax;
-    const last = path[requiredMax - 1];
-    lastRow = last.row;
-    lastCol = last.col;
-
-    highlightHighest();
-    updateAllowedCells();
-    updateStatus(
-      "Livello " + level +
-      ": sequenza precompilata da 1 a " + requiredMax +
-      ". Continua dal " + (requiredMax + 1) + "."
-    );
-  }
-
-function applySolution(path, len) {
+  function applySolution(path, len) {
     cells.forEach(c => {
       c.textContent = "";
       c.classList.remove("allowed", "hint", "highest");
@@ -518,7 +532,8 @@ function applySolution(path, len) {
       if (inBounds(nr, nc)) {
         const idx = indexFromRowCol(nr, nc);
         const cell = cells[idx];
-        if (cell.textContent.trim() === "") {
+        const next = maxNumber + 1;
+        if (cell.textContent.trim() === "" || (cell.dataset.fixed === "true" && cell.textContent.trim() === String(next))) {
           candidateMoves.push({ row: nr, col: nc, idx });
         }
       }
@@ -737,30 +752,124 @@ function applySolution(path, len) {
     }
   }
 
+  
+  function updateLevelSelectUI() {
+    if (!levelSelect) return;
 
-  // inizializza il livello corrente all'avvio
-  loadBestTimeForLevel();
-  updateBestTimeDisplay();
-  updateTimerDisplay();
-  generateLevelLayout(currentLevel);
+    // popola opzioni se vuote
+    if (levelSelect.options.length === 0) {
+      for (let i = 1; i <= LEVEL_COUNT; i++) {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = String(i);
+        levelSelect.appendChild(opt);
+      }
+    }
 
-  if (levelSelect) {
+    for (let i = 0; i < levelSelect.options.length; i++) {
+      const lv = parseInt(levelSelect.options[i].value, 10);
+      levelSelect.options[i].disabled = lv > unlockedLevel;
+    }
+
+    levelSelect.value = String(currentLevel);
+  }
+
+  function generateLevelLayout(level) {
+    // reset griglia
+    cells.forEach(c => {
+      c.textContent = "";
+      c.classList.remove("allowed", "hint", "highest", "fixed", "just-placed");
+      delete c.dataset.fixed;
+    });
+
+    maxNumber = 0;
+    lastRow = null;
+    lastCol = null;
+    hasStarted = false;
+    resetTimer();
+
+    const fixedNums = FIXED_BY_LEVEL[level] || [];
+    if (fixedNums.length === 0) {
+      highlightHighest();
+      updateAllowedCells();
+      updateStatus("Livello " + level + ": nessun numero pre-inserito. Inserisci l'1 per iniziare.");
+      return;
+    }
+
+    const maxNeed = Math.max(...fixedNums);
+
+    // Trova un percorso valido abbastanza lungo
+    let bestPath = null;
+    let tries = 0;
+
+    while (!bestPath && tries < 300) {
+      tries += 1;
+      const startRow = Math.floor(Math.random() * size);
+      const startCol = Math.floor(Math.random() * size);
+
+      const visited = Array.from({ length: size }, () => Array(size).fill(false));
+      const positions = new Array(maxCells);
+      visited[startRow][startCol] = true;
+      positions[0] = { row: startRow, col: startCol };
+
+      const state = { prefixK: 1, positions, visited, currentMax: 1 };
+      const res = solveFromState(state);
+
+      if (res.bestLen >= maxNeed) {
+        bestPath = res.bestPath;
+      }
+    }
+
+    // fallback: se non troviamo un path lungo, lasciamo livello senza fissi (molto raro)
+    if (!bestPath) {
+      highlightHighest();
+      updateAllowedCells();
+      updateStatus("Livello " + level + ": errore generazione layout. Riprova.");
+      return;
+    }
+
+    // piazza solo i numeri richiesti come fissi
+    fixedNums.forEach(n => {
+      const pos = bestPath[n - 1];
+      const idx = indexFromRowCol(pos.row, pos.col);
+      const cell = cells[idx];
+      cell.textContent = String(n);
+      cell.dataset.fixed = "true";
+      cell.classList.add("fixed");
+    });
+
+    highlightHighest();
+    updateAllowedCells();
+    updateStatus(
+      "Livello " + level + ": numeri fissi " + fixedNums.join(", ") +
+      ". Inserisci l'1 per iniziare."
+    );
+  }
+
+if (levelSelect) {
     levelSelect.addEventListener("change", () => {
-      const newLevel = parseInt(levelSelect.value, 10);
-      currentLevel = isNaN(newLevel) ? 1 : newLevel;
-      loadBestTimeForLevel();
+      const lv = parseInt(levelSelect.value, 10);
+      if (isNaN(lv)) return;
+      if (lv > unlockedLevel) {
+        levelSelect.value = String(currentLevel);
+        return;
+      }
+      currentLevel = lv;
+      loadBestTimeForLevel(currentLevel);
       updateBestTimeDisplay();
       generateLevelLayout(currentLevel);
     });
   }
 
-clearBtn.addEventListener("click", () => {
+  clearBtn.addEventListener("click", () => {
     generateLevelLayout(currentLevel);
+    loadBestTimeForLevel(currentLevel);
+    updateBestTimeDisplay();
   });
-
-
-  // inizializza timer e best time per il livello corrente
-  loadBestTimeForLevel();
+  // init UI
+  updateLevelSelectUI();
+  loadBestTimeForLevel(currentLevel);
   updateBestTimeDisplay();
   updateTimerDisplay();
+  generateLevelLayout(currentLevel);
 });
