@@ -303,3 +303,6 @@ button,
 }
 
 #solve-btn { display: none; }
+
+/* debug panel disabled */
+#debug-panel { display: none !important; }
