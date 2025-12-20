@@ -316,3 +316,12 @@ button,
   0%   { transform: translateY(-20px) rotate(0deg); }
   100% { transform: translateY(110vh) rotate(720deg); }
 }
+
+
+/* highlight ultimo numero inserito */
+.grid button.last-number {
+  background: linear-gradient(180deg, #1aff7a, #0fbf5a);
+  color: #000;
+  box-shadow: 0 0 0 2px rgba(26,255,122,0.9),
+              0 0 14px rgba(26,255,122,0.6);
+}

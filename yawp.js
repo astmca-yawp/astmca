@@ -212,7 +212,13 @@ function formatSeconds(totalSeconds) {
     updateTimerDisplay();
   }
 
+  function clearLastNumberHighlight() {
+    const prev = document.querySelector(".grid button.last-number");
+    if (prev) prev.classList.remove("last-number");
+  }
+
   function pulseCell(cell) {
+
     cell.classList.add("just-placed");
     setTimeout(() => cell.classList.remove("just-placed"), 120);
   }
@@ -334,6 +340,8 @@ function formatSeconds(totalSeconds) {
 
     maxNumber = nextNum;
     cell.textContent = String(nextNum);
+    clearLastNumberHighlight();
+    cell.classList.add("last-number");
     lastRow = row;
     lastCol = col;
     vibrate(20);
@@ -827,6 +835,7 @@ function formatSeconds(totalSeconds) {
   }
 
   function generateLevelLayout(level) {
+    clearLastNumberHighlight();
     // reset griglia
     cells.forEach(c => {
       c.textContent = "";
