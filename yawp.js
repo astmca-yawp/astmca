@@ -212,6 +212,19 @@ function formatSeconds(totalSeconds) {
     updateTimerDisplay();
   }
 
+  function syncLastNumberHighlight() {
+    clearLastNumberHighlight();
+    if (!cells || maxNumber <= 0) return;
+
+    // Find the cell that currently contains maxNumber and highlight it
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i].textContent.trim() === String(maxNumber)) {
+        cells[i].classList.add("last-number");
+        return;
+      }
+    }
+  }
+
   function clearLastNumberHighlight() {
     const prev = document.querySelector(".grid button.last-number");
     if (prev) prev.classList.remove("last-number");
@@ -660,6 +673,7 @@ function formatSeconds(totalSeconds) {
     }
     maxNumber -= 1;
     vibrate(30);
+    syncLastNumberHighlight();
 
     if (maxNumber === 0) {
       lastRow = null;
@@ -688,6 +702,8 @@ function formatSeconds(totalSeconds) {
 
     lastRow = newLast.row;
     lastCol = newLast.col;
+
+    syncLastNumberHighlight();
 
     updateStatus("Mossa annullata. Ultimo numero ora: " + maxNumber + ".");
     updateAllowedCells();
