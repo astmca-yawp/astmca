@@ -1,4 +1,125 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+  /* ===== DEBUG MODE (grid-corners secret) ===== */
+  let debugTickInterval = null;
+  let debugCellSeq = [];
+  const DEBUG_SEQ = ["TL", "TR", "BR", "BL"];
+
+  function getDebugEnabled() {
+    return localStorage.getItem("yawpDebugEnabled") === "Y";
+  }
+
+  function setDebugEnabled(enabled) {
+    localStorage.setItem("yawpDebugEnabled", enabled ? "Y" : "N");
+  }
+
+  function debugVibrate() {
+    try {
+      if (navigator && typeof navigator.vibrate === "function") {
+        navigator.vibrate([18, 40, 18]);
+      }
+    } catch (e) {}
+  }
+
+  function showDebugToast(msg) {
+    let el = document.getElementById("debug-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "debug-toast";
+      el.className = "debug-toast";
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 1100);
+  }
+
+  function applyDebugUI() {
+    const enabled = getDebugEnabled();
+
+    const solveBtn = document.getElementById("solve-btn");
+    if (solveBtn) solveBtn.style.display = enabled ? "inline-block" : "none";
+
+    const panel = document.getElementById("debug-panel");
+    if (panel) panel.style.display = enabled ? "block" : "none";
+
+    if (enabled && !debugTickInterval) {
+      debugTickInterval = setInterval(updateDebugPanel, 450);
+    }
+    if (!enabled && debugTickInterval) {
+      clearInterval(debugTickInterval);
+      debugTickInterval = null;
+    }
+  }
+
+  function updateDebugPanel() {
+    if (!getDebugEnabled()) return;
+    const panel = document.getElementById("debug-panel");
+    if (!panel) return;
+
+    const nextNum = maxNumber + 1;
+    const nextFixed = fixedPos && fixedPos[nextNum] ? "SI" : "no";
+    const lookaheadFixed = fixedPos && fixedPos[nextNum + 1] ? "SI" : "no";
+    const allowedCount = document.querySelectorAll(".grid button.allowed").length;
+
+    const lvl = (typeof currentLevel !== "undefined") ? currentLevel : "-";
+    const unl = (typeof unlockedLevel !== "undefined") ? unlockedLevel : "-";
+    const best = (bestTimeSeconds === null || isNaN(bestTimeSeconds)) ? "--:--" : formatSeconds(bestTimeSeconds);
+
+    const rows = [];
+    rows.push(["debug", "ON"]);
+    rows.push(["livello (sbloccato)", String(lvl) + " (" + String(unl) + ")"]);
+    rows.push(["maxNumber", String(maxNumber)]);
+    rows.push(["next", String(nextNum)]);
+    rows.push(["next fisso", nextFixed]);
+    rows.push(["lookahead next+1 fisso", lookaheadFixed]);
+    rows.push(["celle allowed", String(allowedCount)]);
+    rows.push(["posizione", (lastRow === null ? "-" : (String(lastRow) + "," + String(lastCol)))]);
+    rows.push(["timer", formatSeconds(timerSeconds)]);
+    rows.push(["best livello", best]);
+
+    let html = "";
+    for (let i = 0; i < rows.length; i++) {
+      html += '<div class="row"><span class="k">' + rows[i][0] + '</span><span>' + rows[i][1] + "</span></div>";
+    }
+    panel.innerHTML = html;
+  }
+
+  function toggleDebug() {
+    const enabled = !getDebugEnabled();
+    setDebugEnabled(enabled);
+    applyDebugUI();
+    updateDebugPanel();
+    debugVibrate();
+    showDebugToast(enabled ? "Debug ON" : "Debug OFF");
+  }
+
+  function cellCorner(row, col) {
+    if (row === 0 && col === 0) return "TL";
+    if (row === 0 && col === size - 1) return "TR";
+    if (row === size - 1 && col === size - 1) return "BR";
+    if (row === size - 1 && col === 0) return "BL";
+    return null;
+  }
+
+  function registerDebugCornerTap(row, col) {
+    const corner = cellCorner(row, col);
+    if (!corner) return false;
+
+    debugCellSeq.push(corner);
+    if (debugCellSeq.length > 4) debugCellSeq.shift();
+
+    if (debugCellSeq.join(",") === DEBUG_SEQ.join(",")) {
+      debugCellSeq = [];
+      toggleDebug();
+      return true;
+    }
+    return false;
+  }
+  /* ===== END DEBUG MODE ===== */
+
+
+
   const gridEl = document.getElementById("grid");
   const clearBtn = document.getElementById("clear-btn");
   const solveBtn = document.getElementById("solve-btn");
@@ -162,46 +283,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateAllowedCells() {
     resetClasses();
-
-    const next = maxNumber + 1;
-    if (fixedPos[next]) {
-      const { idx, row, col } = fixedPos[next];
-      // Se il prossimo numero è fisso, l'unica cella valida è quella predefinita.
-      if (maxNumber === 0 || canMove(lastRow, lastCol, row, col)) {
-        cells[idx].classList.add("allowed");
-      }
-      return;
-    }
-    highlightHighest();
-
-    if (maxNumber === 0 || maxNumber >= maxCells) {
-      return;
-    }
-
     let anyAllowed = false;
+    const nextNum = maxNumber + 1;
 
-    for (const [dr, dc] of moveDeltas) {
-      const r = lastRow + dr;
-      const c = lastCol + dc;
-      if (inBounds(r, c)) {
+    // If the next number is fixed, only that cell is allowed (if reachable)
+    if (fixedPos[nextNum]) {
+      const p = fixedPos[nextNum];
+      if (maxNumber === 0 || canMove(lastRow, lastCol, p.row, p.col)) {
+        cells[p.idx].classList.add("allowed");
+        anyAllowed = true;
+      }
+      if (!anyAllowed) updateStatus("Nessuna mossa valida: devi raggiungere il " + nextNum + ".");
+      return;
+    }
+
+    // Normal case: highlight all empty reachable cells, with lookahead if next+1 is fixed
+    const nf = fixedPos[nextNum + 1];
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
         const idx = indexFromRowCol(r, c);
         const cell = cells[idx];
-        const next = maxNumber + 1;
-        if (cell.textContent.trim() === "" || (cell.dataset.fixed === "true" && cell.textContent.trim() === String(next))) {
-          cell.classList.add("allowed");
-          anyAllowed = true;
+        if (cell.textContent.trim() !== "") continue;
+
+        if (maxNumber === 0 || canMove(lastRow, lastCol, r, c)) {
+          if (!nf || canMove(r, c, nf.row, nf.col)) {
+            cell.classList.add("allowed");
+            anyAllowed = true;
+          }
         }
       }
     }
 
     if (!anyAllowed && maxNumber < maxCells) {
-      updateStatus("Nessuna mossa possibile: sequenza bloccata a " + maxNumber + ".");
-    } else if (maxNumber > 0 && maxNumber < maxCells) {
-      updateStatus("Numero corrente: " + maxNumber + ".");
-    } else {
-      updateStatus("");
+      updateStatus("Nessuna mossa valida: sequenza bloccata a " + maxNumber + ".");
     }
   }
+
 
   function invalidMoveFeedback() {
     vibrate([40, 40, 40]);
@@ -210,78 +328,43 @@ document.addEventListener("DOMContentLoaded", () => {
   function placeNextNumber(cell) {
     const row = parseInt(cell.dataset.row, 10);
     const col = parseInt(cell.dataset.col, 10);
+    // Segreto debug: 4 celle angolari TL -> TR -> BR -> BL
+    if (registerDebugCornerTap(row, col)) {
+      return;
+    }
 
-    const isFixed = cell.dataset.fixed === "true";
+    const idxHere = indexFromRowCol(row, col);
+
+    const isFixedCell = cell.dataset.fixed === "true";
     const cellVal = cell.textContent.trim();
 
     const nextNum = maxNumber + 1;
-    if (fixedPos[nextNum] && fixedPos[nextNum].idx !== indexFromRowCol(row, col)) {
-      // Il prossimo numero è fisso altrove: non puoi inserirlo in un'altra cella.
+
+    // If next number is fixed somewhere else, you must click that exact cell
+    if (fixedPos[nextNum] && fixedPos[nextNum].idx !== idxHere) {
       invalidMoveFeedback();
       return;
     }
 
-    // Se la cella è fissa, la si può "usare" solo quando è esattamente il prossimo numero
-    if (isFixed) {
+    // Movement constraint from previous number
+    if (maxNumber > 0 && !canMove(lastRow, lastCol, row, col)) {
+      invalidMoveFeedback();
+      return;
+    }
+
+    if (isFixedCell) {
+      // Fixed cell can be used only when it matches nextNum
       if (cellVal !== String(nextNum)) {
         invalidMoveFeedback();
         return;
       }
-      if (maxNumber > 0 && !canMove(lastRow, lastCol, row, col)) {
-        invalidMoveFeedback();
-        return;
-      }
+    } else {
+      // Normal cell must be empty
+      if (cellVal !== "") return;
 
-      if (!hasStarted) {
-        hasStarted = true;
-        resetTimer();
-        startTimer();
-      }
-
-      maxNumber = next;
-      lastRow = row;
-      lastCol = col;
-      vibrate(20);
-      pulseCell(cell);
-
-      if (maxNumber === maxCells) {
-        resetClasses();
-        highlightHighest();
-        stopTimer();
-
-        if (timerSeconds > 0) {
-          if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
-            bestTimeSeconds = timerSeconds;
-            localStorage.setItem(levelBestTimeKey(currentLevel), String(bestTimeSeconds));
-            updateBestTimeDisplay();
-            updateStatus("Completato! Tempo " + formatSeconds(timerSeconds) + ". Nuovo record per il livello " + currentLevel + "!");
-          } else {
-            updateStatus("Completato! Tempo " + formatSeconds(timerSeconds) + ". Miglior tempo livello " + currentLevel + ": " + formatSeconds(bestTimeSeconds) + ".");
-          }
-        } else {
-          updateStatus("Completato!");
-        }
-
-        // sblocco livello successivo
-        if (currentLevel === unlockedLevel && unlockedLevel < LEVEL_COUNT) {
-          unlockedLevel += 1;
-          localStorage.setItem("yawpUnlockedLevel", String(unlockedLevel));
-          updateLevelSelectUI();
-          updateStatus("Hai sbloccato il livello " + unlockedLevel + "!");
-        }
-
-        return;
-      }
-
-      updateAllowedCells();
-      return;
-    }
-
-    // Non fissa: se già piena, non fare nulla
-    if (cellVal !== "") return;
-
-    if (maxNumber > 0) {
-      if (!canMove(lastRow, lastCol, row, col)) {
+      // Lookahead: if next+1 is fixed, this move must allow reaching it
+      const nf = fixedPos[nextNum + 1];
+      if (nf && !canMove(row, col, nf.row, nf.col)) {
         invalidMoveFeedback();
         return;
       }
@@ -293,19 +376,14 @@ document.addEventListener("DOMContentLoaded", () => {
       startTimer();
     }
 
-    if (maxNumber === 0) {
-      maxNumber = 1;
-    } else if (maxNumber < maxCells) {
-      maxNumber += 1;
-    } else {
-      return;
-    }
-
-    cell.textContent = String(maxNumber);
+    maxNumber = nextNum;
+    cell.textContent = String(nextNum);
     lastRow = row;
     lastCol = col;
     vibrate(20);
-    pulseCell(cell);
+
+    cell.classList.add("just-placed");
+    setTimeout(() => cell.classList.remove("just-placed"), 120);
 
     if (maxNumber === maxCells) {
       resetClasses();
@@ -325,17 +403,17 @@ document.addEventListener("DOMContentLoaded", () => {
         updateStatus("Completato!");
       }
 
-      if (currentLevel === unlockedLevel && unlockedLevel < LEVEL_COUNT) {
+      // Unlock next level (if enabled in this build)
+      if (typeof unlockedLevel !== "undefined" && currentLevel === unlockedLevel && unlockedLevel < LEVEL_COUNT) {
         unlockedLevel += 1;
         localStorage.setItem("yawpUnlockedLevel", String(unlockedLevel));
-        updateLevelSelectUI();
-        updateStatus("Hai sbloccato il livello " + unlockedLevel + "!");
+        if (typeof updateLevelSelectUI === "function") updateLevelSelectUI();
       }
 
       return;
-    } else {
-      updateAllowedCells();
     }
+
+    updateAllowedCells();
   }
 
 
@@ -549,8 +627,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (inBounds(nr, nc)) {
         const idx = indexFromRowCol(nr, nc);
         const cell = cells[idx];
-        const next = maxNumber + 1;
-        if (cell.textContent.trim() === "" || (cell.dataset.fixed === "true" && cell.textContent.trim() === String(next))) {
+        const nextNum = maxNumber + 1;
+        if (cell.textContent.trim() === "" || (cell.dataset.fixed === "true" && cell.textContent.trim() === String(nextNum))) {
           candidateMoves.push({ row: nr, col: nc, idx });
         }
       }
@@ -804,6 +882,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastCol = null;
     hasStarted = false;
     fixedPos = {};
+    debugCellSeq = [];
     resetTimer();
 
     const fixedNums = FIXED_BY_LEVEL[level] || [];
@@ -891,4 +970,10 @@ if (levelSelect) {
   updateBestTimeDisplay();
   updateTimerDisplay();
   generateLevelLayout(currentLevel);
+  // Debug must start hidden on every load
+  setDebugEnabled(false);
+
+  applyDebugUI();
+  updateDebugPanel();
+
 });
