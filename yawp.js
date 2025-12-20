@@ -1,125 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-
-  /* ===== DEBUG MODE (grid-corners secret) ===== */
-  let debugTickInterval = null;
-  let debugCellSeq = [];
-  const DEBUG_SEQ = ["TL", "TR", "BR", "BL"];
-
-  function getDebugEnabled() {
-    return localStorage.getItem("yawpDebugEnabled") === "Y";
-  }
-
-  function setDebugEnabled(enabled) {
-    localStorage.setItem("yawpDebugEnabled", enabled ? "Y" : "N");
-  }
-
-  function debugVibrate() {
-    try {
-      if (navigator && typeof navigator.vibrate === "function") {
-        navigator.vibrate([18, 40, 18]);
-      }
-    } catch (e) {}
-  }
-
-  function showDebugToast(msg) {
-    let el = document.getElementById("debug-toast");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "debug-toast";
-      el.className = "debug-toast";
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.classList.add("show");
-    setTimeout(() => el.classList.remove("show"), 1100);
-  }
-
-  function applyDebugUI() {
-    const enabled = getDebugEnabled();
-
-    const solveBtn = document.getElementById("solve-btn");
-    if (solveBtn) solveBtn.style.display = enabled ? "inline-block" : "none";
-
-    const panel = document.getElementById("debug-panel");
-    if (panel) panel.style.display = enabled ? "block" : "none";
-
-    if (enabled && !debugTickInterval) {
-      debugTickInterval = setInterval(updateDebugPanel, 450);
-    }
-    if (!enabled && debugTickInterval) {
-      clearInterval(debugTickInterval);
-      debugTickInterval = null;
-    }
-  }
-
-  function updateDebugPanel() {
-    if (!getDebugEnabled()) return;
-    const panel = document.getElementById("debug-panel");
-    if (!panel) return;
-
-    const nextNum = maxNumber + 1;
-    const nextFixed = fixedPos && fixedPos[nextNum] ? "SI" : "no";
-    const lookaheadFixed = fixedPos && fixedPos[nextNum + 1] ? "SI" : "no";
-    const allowedCount = document.querySelectorAll(".grid button.allowed").length;
-
-    const lvl = (typeof currentLevel !== "undefined") ? currentLevel : "-";
-    const unl = (typeof unlockedLevel !== "undefined") ? unlockedLevel : "-";
-    const best = (bestTimeSeconds === null || isNaN(bestTimeSeconds)) ? "--:--" : formatSeconds(bestTimeSeconds);
-
-    const rows = [];
-    rows.push(["debug", "ON"]);
-    rows.push(["livello (sbloccato)", String(lvl) + " (" + String(unl) + ")"]);
-    rows.push(["maxNumber", String(maxNumber)]);
-    rows.push(["next", String(nextNum)]);
-    rows.push(["next fisso", nextFixed]);
-    rows.push(["lookahead next+1 fisso", lookaheadFixed]);
-    rows.push(["celle allowed", String(allowedCount)]);
-    rows.push(["posizione", (lastRow === null ? "-" : (String(lastRow) + "," + String(lastCol)))]);
-    rows.push(["timer", formatSeconds(timerSeconds)]);
-    rows.push(["best livello", best]);
-
-    let html = "";
-    for (let i = 0; i < rows.length; i++) {
-      html += '<div class="row"><span class="k">' + rows[i][0] + '</span><span>' + rows[i][1] + "</span></div>";
-    }
-    panel.innerHTML = html;
-  }
-
-  function toggleDebug() {
-    const enabled = !getDebugEnabled();
-    setDebugEnabled(enabled);
-    applyDebugUI();
-    updateDebugPanel();
-    debugVibrate();
-    showDebugToast(enabled ? "Debug ON" : "Debug OFF");
-  }
-
-  function cellCorner(row, col) {
-    if (row === 0 && col === 0) return "TL";
-    if (row === 0 && col === size - 1) return "TR";
-    if (row === size - 1 && col === size - 1) return "BR";
-    if (row === size - 1 && col === 0) return "BL";
-    return null;
-  }
-
-  function registerDebugCornerTap(row, col) {
-    const corner = cellCorner(row, col);
-    if (!corner) return false;
-
-    debugCellSeq.push(corner);
-    if (debugCellSeq.length > 4) debugCellSeq.shift();
-
-    if (debugCellSeq.join(",") === DEBUG_SEQ.join(",")) {
-      debugCellSeq = [];
-      toggleDebug();
-      return true;
-    }
-    return false;
-  }
-  /* ===== END DEBUG MODE ===== */
-
-
-
   const gridEl = document.getElementById("grid");
   const clearBtn = document.getElementById("clear-btn");
   const solveBtn = document.getElementById("solve-btn");
@@ -206,7 +85,89 @@ document.addEventListener("DOMContentLoaded", () => {
     return "yawpBestTimeSeconds_L" + String(level);
   }
 
-  function formatSeconds(totalSeconds) {
+  
+  /* ===== VICTORY OVERLAY + CONFETTI ===== */
+  function launchConfetti() {
+    const layer = document.getElementById("confetti-layer");
+    if (!layer) return;
+
+    layer.innerHTML = "";
+    const count = 90;
+    const w = window.innerWidth;
+    const palette = ["#00e0ff", "#00ffa6", "#ffd400", "#ff4d6d", "#b76cff", "#ffffff"];
+
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement("div");
+      el.className = "confetti";
+
+      const x = Math.random() * w;
+      const cw = 6 + Math.random() * 10;
+      const ch = 8 + Math.random() * 14;
+
+      el.style.left = x + "px";
+      el.style.width = cw + "px";
+      el.style.height = ch + "px";
+      el.style.background = palette[Math.floor(Math.random() * palette.length)];
+      el.style.animationDelay = (Math.random() * 0.25) + "s";
+
+      layer.appendChild(el);
+    }
+
+    setTimeout(() => { layer.innerHTML = ""; }, 1700);
+  }
+
+  function showVictoryOverlay() {
+    const overlay = document.getElementById("victory-overlay");
+    const textEl = document.getElementById("victory-text");
+    const timeEl = document.getElementById("victory-time");
+    const nextBtn = document.getElementById("victory-next");
+
+    if (!overlay || !textEl || !timeEl || !nextBtn) return;
+
+    const isLast = (typeof LEVEL_COUNT !== "undefined") ? (currentLevel >= LEVEL_COUNT) : false;
+    const nextLevel = currentLevel + 1;
+
+    const t = formatSeconds(timerSeconds);
+    timeEl.innerHTML = "Tempo: <span>" + t + "</span>";
+
+    if (!isLast) {
+      textEl.innerHTML =
+        "Hai completato il livello <span>" + currentLevel + "</span>.<br>" +
+        "Ottima gestione della sequenza e delle mosse consentite.<br>" +
+        "Se vuoi, puoi proseguire al livello successivo.";
+      nextBtn.textContent = "Continua con il livello " + nextLevel;
+    } else {
+      textEl.innerHTML =
+        "Hai completato tutti i livelli.<br>" +
+        "Risultato eccellente.";
+      nextBtn.textContent = "Chiudi";
+    }
+
+    overlay.classList.remove("hidden");
+    overlay.setAttribute("aria-hidden", "false");
+
+    launchConfetti();
+    try { navigator.vibrate?.([80, 40, 80]); } catch (e) {}
+
+    nextBtn.onclick = () => {
+      overlay.classList.add("hidden");
+      overlay.setAttribute("aria-hidden", "true");
+
+      if (!isLast) {
+        // switch to next level using existing UI controls if present
+        currentLevel = nextLevel;
+        if (typeof updateLevelSelectUI === "function") updateLevelSelectUI();
+
+        loadBestTimeForLevel(currentLevel);
+        updateBestTimeDisplay();
+        generateLevelLayout(currentLevel);
+      }
+    };
+  }
+  /* ===== END VICTORY OVERLAY + CONFETTI ===== */
+
+
+function formatSeconds(totalSeconds) {
     const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
     const s = String(totalSeconds % 60).padStart(2, "0");
     return m + ":" + s;
@@ -328,11 +289,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function placeNextNumber(cell) {
     const row = parseInt(cell.dataset.row, 10);
     const col = parseInt(cell.dataset.col, 10);
-    // Segreto debug: 4 celle angolari TL -> TR -> BR -> BL
-    if (registerDebugCornerTap(row, col)) {
-      return;
-    }
-
     const idxHere = indexFromRowCol(row, col);
 
     const isFixedCell = cell.dataset.fixed === "true";
@@ -389,6 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
       resetClasses();
       highlightHighest();
       stopTimer();
+      showVictoryOverlay();
 
       if (timerSeconds > 0) {
         if (bestTimeSeconds === null || timerSeconds < bestTimeSeconds) {
@@ -882,7 +839,6 @@ document.addEventListener("DOMContentLoaded", () => {
     lastCol = null;
     hasStarted = false;
     fixedPos = {};
-    debugCellSeq = [];
     resetTimer();
 
     const fixedNums = FIXED_BY_LEVEL[level] || [];
@@ -970,10 +926,4 @@ if (levelSelect) {
   updateBestTimeDisplay();
   updateTimerDisplay();
   generateLevelLayout(currentLevel);
-  // Debug must start hidden on every load
-  setDebugEnabled(false);
-
-  applyDebugUI();
-  updateDebugPanel();
-
 });

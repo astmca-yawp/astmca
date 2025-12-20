@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <!-- YAWP version: v51 -->
   <meta charset="UTF-8">
-  <title>YaWp v51</title>
+  <title>YaWp v53</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=51">
-  <script defer src="yawp.js?v=51"></script>
+  <link rel="stylesheet" href="style.css?v=53">
+  <script defer src="yawp.js?v=53"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="astmca_logo.png" type="image/png">
 </head>
@@ -69,5 +68,17 @@
     </p>
 
   </div>
+
+  <div id="victory-overlay" class="victory-overlay hidden" aria-hidden="true">
+    <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
+
+    <div class="victory-card" role="dialog" aria-modal="true" aria-label="Completato">
+      <div class="victory-title">Complimenti.</div>
+      <div class="victory-text" id="victory-text"></div>
+      <div class="victory-time" id="victory-time"></div>
+      <button id="victory-next" class="victory-btn">Continua</button>
+    </div>
+  </div>
+
 </body>
 </html>
