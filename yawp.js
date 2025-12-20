@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let timerSeconds = 0;
   let bestTimeSeconds = null;
   let hasStarted = false;
+  let fixedPos = {};
 
 
 
@@ -161,6 +162,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateAllowedCells() {
     resetClasses();
+
+    const next = maxNumber + 1;
+    if (fixedPos[next]) {
+      const { idx, row, col } = fixedPos[next];
+      // Se il prossimo numero è fisso, l'unica cella valida è quella predefinita.
+      if (maxNumber === 0 || canMove(lastRow, lastCol, row, col)) {
+        cells[idx].classList.add("allowed");
+      }
+      return;
+    }
     highlightHighest();
 
     if (maxNumber === 0 || maxNumber >= maxCells) {
@@ -203,10 +214,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const isFixed = cell.dataset.fixed === "true";
     const cellVal = cell.textContent.trim();
 
+    const nextNum = maxNumber + 1;
+    if (fixedPos[nextNum] && fixedPos[nextNum].idx !== indexFromRowCol(row, col)) {
+      // Il prossimo numero è fisso altrove: non puoi inserirlo in un'altra cella.
+      invalidMoveFeedback();
+      return;
+    }
+
     // Se la cella è fissa, la si può "usare" solo quando è esattamente il prossimo numero
     if (isFixed) {
-      const next = maxNumber + 1;
-      if (cellVal !== String(next)) {
+      if (cellVal !== String(nextNum)) {
         invalidMoveFeedback();
         return;
       }
@@ -585,17 +602,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (foundIdx === -1) {
-      updateStatus("Stato non coerente, azzero la griglia.");
-      cells.forEach(c => c.textContent = "");
-      maxNumber = 0;
-      lastRow = null;
-      lastCol = null;
-      resetClasses();
+      updateStatus("Stato non coerente, rigenero il livello.");
+      generateLevelLayout(currentLevel);
+      loadBestTimeForLevel(currentLevel);
+      updateBestTimeDisplay();
       invalidMoveFeedback();
       return;
     }
 
-    cells[foundIdx].textContent = "";
+    if (cells[foundIdx].dataset.fixed === "true") {
+      // Il numero è fisso: non si cancella, ma si torna al numero precedente.
+    } else {
+      cells[foundIdx].textContent = "";
+    }
     maxNumber -= 1;
     vibrate(30);
 
@@ -616,12 +635,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!newLast) {
-      updateStatus("Dopo l'annullamento lo stato non è coerente, quindi azzero la griglia.");
-      cells.forEach(c => c.textContent = "");
-      maxNumber = 0;
-      lastRow = null;
-      lastCol = null;
-      resetClasses();
+      updateStatus("Dopo l'annullamento lo stato non è coerente, rigenero il livello.");
+      generateLevelLayout(currentLevel);
+      loadBestTimeForLevel(currentLevel);
+      updateBestTimeDisplay();
       invalidMoveFeedback();
       return;
     }
@@ -786,6 +803,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastRow = null;
     lastCol = null;
     hasStarted = false;
+    fixedPos = {};
     resetTimer();
 
     const fixedNums = FIXED_BY_LEVEL[level] || [];
@@ -836,6 +854,7 @@ document.addEventListener("DOMContentLoaded", () => {
       cell.textContent = String(n);
       cell.dataset.fixed = "true";
       cell.classList.add("fixed");
+      fixedPos[n] = { idx, row: pos.row, col: pos.col };
     });
 
     highlightHighest();
