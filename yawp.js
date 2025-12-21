@@ -403,7 +403,7 @@ function formatSeconds(totalSeconds) {
     const uStr = best ? String(best.bestUndos ?? 0) : "-";
 
     bestTimeEl.innerHTML =
-      '<span class="yawp-version">v83</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
+      '<span class="yawp-version">v85</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
       ' <span class="best-stats">· 💡' + hStr + ' · ↩︎' + uStr + '</span>';
   }
 
