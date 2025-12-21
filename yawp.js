@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   let gameMode = localStorage.getItem("yawpGameMode") || "easy";
+  let debugEnabled = (localStorage.getItem('yawpDebug') === '1');
+  let cornerSecretInstalled = false;
   const modeSelect = document.getElementById("mode-select");
   if (modeSelect) {
     modeSelect.value = gameMode;
@@ -8,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("yawpGameMode", gameMode);
       clearLastNumberHighlight();
       generateLevelLayout(currentLevel);
+  installCornerCellSecret();
     });
   }
 
@@ -20,7 +23,85 @@ document.addEventListener("DOMContentLoaded", () => {
   const quickKeys = document.querySelectorAll(".qkey");
   const appEl = document.querySelector(".app");
 
-  const timerEl = document.getElementById("timer");
+  
+  function showToast(msg) {
+    let t = document.getElementById("toast");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "toast";
+      t.style.position = "fixed";
+      t.style.left = "50%";
+      t.style.bottom = "18px";
+      t.style.transform = "translateX(-50%)";
+      t.style.padding = "10px 14px";
+      t.style.borderRadius = "999px";
+      t.style.background = "rgba(0,0,0,0.85)";
+      t.style.color = "#fff";
+      t.style.fontSize = "0.95rem";
+      t.style.zIndex = "100000";
+      t.style.opacity = "0";
+      t.style.transition = "opacity 180ms ease";
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    requestAnimationFrame(() => { t.style.opacity = "1"; });
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 900);
+  }
+
+  function applyDebugUI() {
+    if (debugEnabled) {
+      document.body.classList.add("debug-on");
+    } else {
+      document.body.classList.remove("debug-on");
+    }
+  }
+
+  function setDebugEnabled(val) {
+    debugEnabled = !!val;
+    localStorage.setItem("yawpDebug", debugEnabled ? "1" : "0");
+    applyDebugUI();
+    try { navigator.vibrate?.(25); } catch(e) {}
+    showToast(debugEnabled ? "Debug ON" : "Debug OFF");
+  }
+
+
+  function installCornerCellSecret() {
+    if (cornerSecretInstalled) return;
+    cornerSecretInstalled = true;
+    const gridEl = document.getElementById("grid");
+    if (!gridEl) return;
+
+    const seq = [
+      { r: 0, c: 0 },
+      { r: 0, c: 8 },
+      { r: 8, c: 8 },
+      { r: 8, c: 0 },
+    ];
+    let idx = 0;
+
+    gridEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+
+      const r = parseInt(btn.dataset.row, 10);
+      const c = parseInt(btn.dataset.col, 10);
+      if (Number.isNaN(r) || Number.isNaN(c)) return;
+
+      const exp = seq[idx];
+      if (r === exp.r && c === exp.c) {
+        idx += 1;
+        if (idx === seq.length) {
+          idx = 0;
+          setDebugEnabled(!debugEnabled);
+        }
+      } else {
+        // restart if they clicked the first corner, else reset
+        idx = (r === seq[0].r && c === seq[0].c) ? 1 : 0;
+      }
+    });
+  }
+const timerEl = document.getElementById("timer");
   const bestTimeEl = document.getElementById("best-time");
   const levelSelect = document.getElementById("level-select");
 
@@ -199,9 +280,9 @@ function formatSeconds(totalSeconds) {
   function updateBestTimeDisplay() {
     if (!bestTimeEl) return;
     if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v64</span> 🏆 Livello ' + currentLevel + ": --:--";
+      bestTimeEl.innerHTML = '<span class="yawp-version">v67</span> 🏆 Livello ' + currentLevel + ": --:--";
     } else {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v64</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
+      bestTimeEl.innerHTML = '<span class="yawp-version">v67</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
     }
   }
 

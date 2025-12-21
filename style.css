@@ -363,3 +363,8 @@ button,
   font-size: 0.8rem;
   opacity: 0.65;
 }
+
+
+/* debug: solver button hidden unless debug enabled */
+#solve-btn { display: none; }
+.debug-on #solve-btn { display: inline-flex; }
