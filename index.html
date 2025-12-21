@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <!-- YAWP version: v56 -->
+    <!-- YAWP version: v61 -->
   <meta charset="UTF-8">
-  <title>YaWp v56</title>
+  <title>YaWp v61</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=56">
-  <script defer src="yawp.js?v=56"></script>
+  <link rel="stylesheet" href="style.css?v=61">
+  <script defer src="yawp.js?v=61"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="astmca_logo.png" type="image/png">
 </head>
@@ -24,7 +24,16 @@
       <select id="level-select"></select>
     </div>
 
-    <div id="grid" class="grid"></div>
+    
+    <div class="mode-bar">
+      <label for="mode-select">Modalità:</label>
+      <select id="mode-select">
+        <option value="easy">Facile</option>
+        <option value="classic">Classica</option>
+      </select>
+    </div>
+
+<div id="grid" class="grid"></div>
 
     <div class="controls-layout">
       <div class="side-group side-left">
@@ -63,23 +72,5 @@
     <div id="status" class="status"></div>
 
     <p class="rules">
-      Regole: riempi tutte le 81 celle con numeri progressivi (1, 2, 3, ..., 81) senza ripetizioni.
-      1 può stare in qualsiasi cella; ogni numero successivo deve essere sulla stessa riga o colonna
-      saltando 2 celle (spostamento di 3), oppure in diagonale saltando 1 cella (spostamento di 2 in riga e colonna).
-    </p>
-
-  </div>
-
-  <div id="victory-overlay" class="victory-overlay hidden" aria-hidden="true">
-    <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
-
-    <div class="victory-card" role="dialog" aria-modal="true" aria-label="Completato">
-      <div class="victory-title">Complimenti.</div>
-      <div class="victory-text" id="victory-text"></div>
-      <div class="victory-time" id="victory-time"></div>
-      <button id="victory-next" class="victory-btn">Continua</button>
-    </div>
-  </div>
-
-</body>
+      Regole: riempi tutte le 81 celle con numeri progressivi (1, 2, 3, …, 81) senza ripetizioni. 1 può stare in qualsiasi cella; ogni numero successivo deve essere sulla stessa riga o colonna saltando 2 celle (spostamento di 3), oppure in diagonale saltando 1 cella (spostamento di 2 in riga e colonna). In modalità Facile è consentito anche saltare 1 cella in orizzontale/verticale (spostamento di 2) e la mossa “cavallo” (2+1).</body>
 </html>

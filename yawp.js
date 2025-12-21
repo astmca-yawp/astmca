@@ -1,4 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
+  let gameMode = localStorage.getItem("yawpGameMode") || "easy";
+  const modeSelect = document.getElementById("mode-select");
+  if (modeSelect) {
+    modeSelect.value = gameMode;
+    modeSelect.addEventListener("change", () => {
+      gameMode = modeSelect.value;
+      localStorage.setItem("yawpGameMode", gameMode);
+      clearLastNumberHighlight();
+      generateLevelLayout(currentLevel);
+    });
+  }
+
   const gridEl = document.getElementById("grid");
   const clearBtn = document.getElementById("clear-btn");
   const solveBtn = document.getElementById("solve-btn");
@@ -30,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (unlockedLevel > LEVEL_COUNT) unlockedLevel = LEVEL_COUNT;
 
   let currentLevel = unlockedLevel;
+gameMode = localStorage.getItem('yawpGameMode') || 'easy';
 
   let timerInterval = null;
   let timerSeconds = 0;
@@ -240,14 +253,24 @@ function formatSeconds(totalSeconds) {
     const dr = toRow - fromRow;
     const dc = toCol - fromCol;
 
+    // Orizzontale/Verticale:
+    // - Classica: salto 2 celle (spostamento 3)
+    // - Facile: salto 1 o 2 celle (spostamento 2 o 3)
+    const orthoDelta = (gameMode === "easy") ? [2, 3] : [3];
+
     const isOrthogonal =
-      (dr === 0 && Math.abs(dc) === 3) ||
-      (dc === 0 && Math.abs(dr) === 3);
+      (dr === 0 && orthoDelta.includes(Math.abs(dc))) ||
+      (dc === 0 && orthoDelta.includes(Math.abs(dr)));
 
-    const isDiagonal =
-      Math.abs(dr) === 2 && Math.abs(dc) === 2;
+    // Diagonale: salto 1 cella (spostamento 2 in riga e colonna)
+    const isDiagonal = (Math.abs(dr) === 2 && Math.abs(dc) === 2);
 
-    return isOrthogonal || isDiagonal;
+    // Mossa "cavallo" (solo Facile): L (2,1) o (1,2)
+    const isKnight =
+      (gameMode === "easy") &&
+      ((Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2));
+
+    return isOrthogonal || isDiagonal || isKnight;
   }
 
   function highlightHighest() {
