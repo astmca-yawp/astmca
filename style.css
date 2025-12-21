@@ -340,3 +340,26 @@ button,
   padding: 4px 8px;
   border-radius: 8px;
 }
+
+
+/* version label */
+.yawp-version {
+  display: inline-block;
+  font-size: 0.8rem;
+  opacity: 0.6;
+  margin-right: 6px;
+}
+
+
+/* version label (visible before trophy) */
+.yawp-version-line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.yawp-version {
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
