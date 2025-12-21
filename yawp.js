@@ -1,4 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // evita zoom su doppio click/tap (soprattutto su iOS)
+  const preventDoubleTapZoom = (el) => {
+    if (!el) return;
+    el.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+    }, { passive: false });
+  };
+
   let gameMode = localStorage.getItem("yawpGameMode") || "easy";
   let soundEnabled = (localStorage.getItem('yawpSound') !== '0');
   let audioCtx = null;
@@ -6,6 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let debugEnabled = (localStorage.getItem('yawpDebug') === '1');
   let cornerSecretInstalled = false;
   const modeSelect = document.getElementById("mode-select");
+  preventDoubleTapZoom(document.body);
+  preventDoubleTapZoom(document.getElementById("grid"));
   const soundBtn = document.getElementById("sound-toggle");
   if (soundBtn) {
     const refreshSoundUI = () => {
@@ -349,9 +359,9 @@ function formatSeconds(totalSeconds) {
   function updateBestTimeDisplay() {
     if (!bestTimeEl) return;
     if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v70</span> 🏆 Livello ' + currentLevel + ": --:--";
+      bestTimeEl.innerHTML = '<span class="yawp-version">v73</span> 🏆 Livello ' + currentLevel + ": --:--";
     } else {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v70</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
+      bestTimeEl.innerHTML = '<span class="yawp-version">v73</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
     }
   }
 
@@ -572,6 +582,7 @@ function formatSeconds(totalSeconds) {
 
   function parseCurrentStateAllowPrefix() {
     let currentMax = 0;
+    let currentMaxDynamic = 0;
     const freq = new Array(maxCells + 1).fill(0);
     const positions = new Array(maxCells);
 
@@ -590,12 +601,20 @@ function formatSeconds(totalSeconds) {
           updateStatus("Il numero " + v + " è presente più di una volta.");
           return null;
         }
+        // I numeri preimpostati (fixed) possono essere "nel futuro" e non devono influenzare il max corrente
+        const isFixed = (cells[idx].dataset.fixed === "true");
+        if (!isFixed) {
+          currentMaxDynamic = Math.max(currentMaxDynamic, v);
+        }
         currentMax = Math.max(currentMax, v);
         positions[v - 1] = { row: r, col: c };
       }
     }
 
-    if (currentMax === 0) {
+    // per la logica della sequenza consideriamo come massimo solo ciò che il giocatore ha inserito
+    // (i fixed restano sulla griglia ma non devono far scattare la correzione)
+    const effectiveMax = Math.max(currentMaxDynamic, positions[0] ? 1 : 0);
+    if (effectiveMax === 0) {
       updateStatus("La griglia è vuota. Inserisci almeno un 1 per iniziare.");
       return null;
     }
@@ -606,7 +625,7 @@ function formatSeconds(totalSeconds) {
     }
 
     let prefixK = 1;
-    for (let n = 2; n <= currentMax; n++) {
+    for (let n = 2; n <= effectiveMax; n++) {
       if (!positions[n - 1]) {
         prefixK = n - 1;
         break;
@@ -632,7 +651,7 @@ function formatSeconds(totalSeconds) {
       prefixK,
       positions,
       visited,
-      currentMax
+      currentMax: effectiveMax
     };
   }
 
@@ -748,11 +767,13 @@ function formatSeconds(totalSeconds) {
       for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
           const idx = indexFromRowCol(r, c);
-          const vStr = cells[idx].textContent.trim();
+          const cell = cells[idx];
+          if (cell.dataset.fixed === "true") continue; // non toccare i numeri preimpostati
+          const vStr = cell.textContent.trim();
           if (vStr === "") continue;
           const v = parseInt(vStr, 10);
           if (!isNaN(v) && v > state.prefixK) {
-            cells[idx].textContent = "";
+            cell.textContent = "";
           }
         }
       }

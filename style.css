@@ -382,3 +382,12 @@ button,
 .sound-toggle.off {
   opacity: 0.5;
 }
+
+
+/* mobile: evita zoom su doppio tap */
+html, body {
+  touch-action: manipulation;
+}
+.grid button, .mode-bar button, .mode-bar select, button {
+  touch-action: manipulation;
+}
