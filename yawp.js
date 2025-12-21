@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let soundEnabled = (localStorage.getItem('yawpSound') !== '0');
   let audioCtx = null;
   let audioUnlocked = false;
+  let hintsUsed = 0;
+  let undosUsed = 0;
   let debugEnabled = (localStorage.getItem('yawpDebug') === '1');
   let cornerSecretInstalled = false;
   const modeSelect = document.getElementById("mode-select");
@@ -82,7 +84,30 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   
-  /* ===== AUDIO (optional, works on iOS too) ===== */
+  
+  /* ===== STATS (best time + hints + undo) ===== */
+  function statsKey(level, mode) {
+    return `yawpStats_${mode}_L${level}`;
+  }
+
+  function loadBestStats(level, mode) {
+    try {
+      const raw = localStorage.getItem(statsKey(level, mode));
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveBestStats(level, mode, statsObj) {
+    try {
+      localStorage.setItem(statsKey(level, mode), JSON.stringify(statsObj));
+    } catch (e) {}
+  }
+  /* ===== END STATS ===== */
+
+/* ===== AUDIO (optional, works on iOS too) ===== */
   function ensureAudio() {
     if (audioCtx) return;
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -246,7 +271,7 @@ gameMode = localStorage.getItem('yawpGameMode') || 'easy';
   }
 
   function resetClasses() {
-    cells.forEach(c => c.classList.remove("allowed", "hint", "highest"));
+    cells.forEach(c => c.classList.remove("allowed", "hint", "highest", "unreachable"));
   }
 
   function updateStatus(msg) {
@@ -290,7 +315,16 @@ gameMode = localStorage.getItem('yawpGameMode') || 'easy';
   }
 
   function showVictoryOverlay() {
-    const overlay = document.getElementById("victory-overlay");
+    // salva best stats (tempo + lampadina + undo) per questo livello e modalità
+    const runSeconds = timerSeconds; // tempo della run corrente
+    const existing = loadBestStats(currentLevel, gameMode);
+    const candidate = { bestTimeSeconds: runSeconds, bestHints: hintsUsed, bestUndos: undosUsed };
+
+    if (!existing || existing.bestTimeSeconds === null || isNaN(existing.bestTimeSeconds) || runSeconds < existing.bestTimeSeconds) {
+      saveBestStats(currentLevel, gameMode, candidate);
+    }
+    updateBestTimeDisplay();
+const overlay = document.getElementById("victory-overlay");
     const textEl = document.getElementById("victory-text");
     const timeEl = document.getElementById("victory-time");
     const nextBtn = document.getElementById("victory-next");
@@ -357,12 +391,20 @@ function formatSeconds(totalSeconds) {
   }
 
   function updateBestTimeDisplay() {
+    const bestTimeEl = document.getElementById("best-time");
     if (!bestTimeEl) return;
-    if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v73</span> 🏆 Livello ' + currentLevel + ": --:--";
-    } else {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v73</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
-    }
+
+    const best = loadBestStats(currentLevel, gameMode);
+    const timeStr = (!best || best.bestTimeSeconds === null || isNaN(best.bestTimeSeconds))
+      ? "--:--"
+      : formatSeconds(best.bestTimeSeconds);
+
+    const hStr = best ? String(best.bestHints ?? 0) : "-";
+    const uStr = best ? String(best.bestUndos ?? 0) : "-";
+
+    bestTimeEl.innerHTML =
+      '<span class="yawp-version">v83</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
+      ' <span class="best-stats">· 💡' + hStr + ' · ↩︎' + uStr + '</span>';
   }
 
   function startTimer() {
@@ -478,7 +520,25 @@ function formatSeconds(totalSeconds) {
       }
     }
 
-    if (!anyAllowed && maxNumber < maxCells) {
+    
+    // marca celle libere ma non raggiungibili (solo quando la partita è iniziata)
+    if (maxNumber > 0) {
+      for (const cell of cells) {
+        if (cell.textContent.trim() !== "") {
+          cell.classList.remove("unreachable");
+          continue;
+        }
+        if (cell.classList.contains("allowed")) {
+          cell.classList.remove("unreachable");
+        } else {
+          cell.classList.add("unreachable");
+        }
+      }
+    } else {
+      for (const cell of cells) cell.classList.remove("unreachable");
+    }
+
+if (!anyAllowed && maxNumber < maxCells) {
       updateStatus("Nessuna mossa valida: sequenza bloccata a " + maxNumber + ".");
     }
   }
@@ -862,6 +922,9 @@ function formatSeconds(totalSeconds) {
       return;
     }
 
+    undosUsed += 1;
+
+
     if (cells[foundIdx].dataset.fixed === "true") {
       // Il numero è fisso: non si cancella, ma si torna al numero precedente.
     } else {
@@ -922,6 +985,7 @@ function formatSeconds(totalSeconds) {
   });
 
   hintBtn.addEventListener("click", () => {
+    hintsUsed += 1;
     suggestLocalCorrectionOrMove();
   });
 
@@ -1047,6 +1111,11 @@ function formatSeconds(totalSeconds) {
   }
 
   function generateLevelLayout(level) {
+    hintsUsed = 0;
+    undosUsed = 0;
+    const best = loadBestStats(level, gameMode);
+    bestTimeSeconds = best ? best.bestTimeSeconds : null;
+
     clearLastNumberHighlight();
     // reset griglia
     cells.forEach(c => {

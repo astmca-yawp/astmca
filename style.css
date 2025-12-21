@@ -391,3 +391,73 @@ html, body {
 .grid button, .mode-bar button, .mode-bar select, button {
   touch-action: manipulation;
 }
+
+
+/* compact top spacing (mobile-friendly) */
+body {
+  padding-top: 8px;
+}
+
+
+/* keep strong backgrounds for special states */
+.grid button.fixed {
+  background-color: #e0e0e0;
+}
+
+
+
+
+/* watermark logo in grid (overlay sopra le celle, celle opache) */
+:root {
+  --logo-opacity: 0.40; /* 0.06 - 0.14 consigliato */
+}
+
+.grid {
+  position: relative;
+}
+
+.grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("astmca_logo_watermark.png?v=77");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 72%;
+  opacity: var(--logo-opacity);
+  pointer-events: none;
+  z-index: 5;              /* sopra le celle */
+  mix-blend-mode: multiply; /* visibile anche su sfondi chiari */
+}
+
+
+.best-stats{font-size:0.95rem;opacity:0.85;}
+
+
+/* evidenzia celle libere vs occupate */
+.grid button {
+  background-color: #f4f7fb; /* libero */
+}
+
+.grid button.filled,
+.grid button.has-number {
+  background-color: #ffffff; /* occupato */
+  font-weight: 700;
+}
+
+.grid button.fixed {
+  background-color: #e0e0e0; /* numeri preimpostati */
+  font-weight: 700;
+}
+
+/* ultimo numero (verde) resta prioritario */
+.grid button.last-number {
+  background-color: #fff6a5 !important;
+}
+
+
+/* celle libere ma non raggiungibili (guida visiva) */
+.grid button.unreachable {
+  background-color: #e7ebf2; /* più spento del libero */
+  opacity: 0.55;
+}
