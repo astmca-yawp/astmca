@@ -349,9 +349,9 @@ function formatSeconds(totalSeconds) {
   function updateBestTimeDisplay() {
     if (!bestTimeEl) return;
     if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v69</span> 🏆 Livello ' + currentLevel + ": --:--";
+      bestTimeEl.innerHTML = '<span class="yawp-version">v70</span> 🏆 Livello ' + currentLevel + ": --:--";
     } else {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v69</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
+      bestTimeEl.innerHTML = '<span class="yawp-version">v70</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
     }
   }
 
