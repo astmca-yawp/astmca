@@ -1,8 +1,30 @@
 document.addEventListener("DOMContentLoaded", () => {
   let gameMode = localStorage.getItem("yawpGameMode") || "easy";
+  let soundEnabled = (localStorage.getItem('yawpSound') !== '0');
+  let audioCtx = null;
+  let audioUnlocked = false;
   let debugEnabled = (localStorage.getItem('yawpDebug') === '1');
   let cornerSecretInstalled = false;
   const modeSelect = document.getElementById("mode-select");
+  const soundBtn = document.getElementById("sound-toggle");
+  if (soundBtn) {
+    const refreshSoundUI = () => {
+      soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
+      soundBtn.classList.toggle("off", !soundEnabled);
+    };
+    refreshSoundUI();
+    soundBtn.addEventListener("click", () => {
+      // user gesture: unlock audio and toggle
+      unlockAudio();
+      soundEnabled = !soundEnabled;
+      localStorage.setItem("yawpSound", soundEnabled ? "1" : "0");
+      refreshSoundUI();
+      showToast(soundEnabled ? "Audio ON" : "Audio OFF");
+      try { navigator.vibrate?.(15); } catch(e) {}
+    playTick();
+    });
+  }
+
   if (modeSelect) {
     modeSelect.value = gameMode;
     modeSelect.addEventListener("change", () => {
@@ -49,7 +71,53 @@ document.addEventListener("DOMContentLoaded", () => {
     t._hideTimer = setTimeout(() => { t.style.opacity = "0"; }, 900);
   }
 
-  function applyDebugUI() {
+  
+  /* ===== AUDIO (optional, works on iOS too) ===== */
+  function ensureAudio() {
+    if (audioCtx) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx = new Ctx();
+  }
+
+  function unlockAudio() {
+    ensureAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    audioUnlocked = true;
+  }
+
+  function playTick() {
+    if (!soundEnabled) return;
+    ensureAudio();
+    if (!audioCtx) return;
+
+    // On iOS Safari, audio must be triggered after a user gesture.
+    if (!audioUnlocked) return;
+
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, t0);          // A5
+    osc.frequency.exponentialRampToValueAtTime(660, t0 + 0.06);
+
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.12, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.08);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(t0);
+    osc.stop(t0 + 0.09);
+  }
+  /* ===== END AUDIO ===== */
+
+function applyDebugUI() {
     if (debugEnabled) {
       document.body.classList.add("debug-on");
     } else {
@@ -81,6 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let idx = 0;
 
     gridEl.addEventListener("click", (e) => {
+      unlockAudio();
       const btn = e.target.closest("button");
       if (!btn) return;
 
@@ -280,9 +349,9 @@ function formatSeconds(totalSeconds) {
   function updateBestTimeDisplay() {
     if (!bestTimeEl) return;
     if (bestTimeSeconds === null || isNaN(bestTimeSeconds)) {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v67</span> 🏆 Livello ' + currentLevel + ": --:--";
+      bestTimeEl.innerHTML = '<span class="yawp-version">v69</span> 🏆 Livello ' + currentLevel + ": --:--";
     } else {
-      bestTimeEl.innerHTML = '<span class="yawp-version">v67</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
+      bestTimeEl.innerHTML = '<span class="yawp-version">v69</span> 🏆 Livello ' + currentLevel + ": " + formatSeconds(bestTimeSeconds);
     }
   }
 
@@ -462,6 +531,8 @@ function formatSeconds(totalSeconds) {
     lastRow = row;
     lastCol = col;
     vibrate(20);
+    unlockAudio();
+    playTick();
 
     cell.classList.add("just-placed");
     setTimeout(() => cell.classList.remove("just-placed"), 120);
