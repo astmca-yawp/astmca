@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   let gameMode = localStorage.getItem("yawpGameMode") || "easy";
+  let boardSize = parseInt(localStorage.getItem("yawpBoardSize") || "9", 10);
+  if (isNaN(boardSize) || (boardSize !== 6 && boardSize !== 9)) boardSize = 9;
   let soundEnabled = (localStorage.getItem('yawpSound') !== '0');
   let audioCtx = null;
   let audioUnlocked = false;
@@ -16,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let debugEnabled = (localStorage.getItem('yawpDebug') === '1');
   let cornerSecretInstalled = false;
   const modeSelect = document.getElementById("mode-select");
+  const sizeSelect = document.getElementById("size-select");
   preventDoubleTapZoom(document.body);
   preventDoubleTapZoom(document.getElementById("grid"));
   const soundBtn = document.getElementById("sound-toggle");
@@ -46,6 +49,29 @@ document.addEventListener("DOMContentLoaded", () => {
       generateLevelLayout(currentLevel);
   installCornerCellSecret();
     });
+
+  if (sizeSelect) {
+    sizeSelect.value = String(boardSize);
+    sizeSelect.addEventListener("change", () => {
+      boardSize = parseInt(sizeSelect.value, 10);
+      if (isNaN(boardSize) || (boardSize !== 6 && boardSize !== 9)) boardSize = 9;
+      localStorage.setItem("yawpBoardSize", String(boardSize));
+
+      // ricarica progresso e UI per questa dimensione
+      unlockedLevel = localStorage.getItem(unlockedLevelKey())
+        ? parseInt(localStorage.getItem(unlockedLevelKey()), 10)
+        : 1;
+      if (isNaN(unlockedLevel) || unlockedLevel < 1) unlockedLevel = 1;
+      if (unlockedLevel > LEVEL_COUNT) unlockedLevel = LEVEL_COUNT;
+
+      currentLevel = unlockedLevel;
+      updateLevelSelectUI();
+      rebuildGrid();
+      generateLevelLayout(currentLevel);
+      updateBestTimeDisplay();
+    });
+  }
+
   }
 
   const gridEl = document.getElementById("grid");
@@ -87,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   /* ===== STATS (best time + hints + undo) ===== */
   function statsKey(level, mode) {
-    return `yawpStats_${mode}_L${level}`;
+    return `yawpStats_${mode}_S${boardSize}_L${level}`;
   }
 
   function loadBestStats(level, mode) {
@@ -220,8 +246,12 @@ const timerEl = document.getElementById("timer");
     7: [5, 8, 9, 14, 17, 21, 22]
   };
 
-  let unlockedLevel = localStorage.getItem("yawpUnlockedLevel")
-    ? parseInt(localStorage.getItem("yawpUnlockedLevel"), 10)
+    function unlockedLevelKey() {
+    return `yawpUnlockedLevel_S${boardSize}`;
+  }
+
+let unlockedLevel = localStorage.getItem(unlockedLevelKey())
+    ? parseInt(localStorage.getItem(unlockedLevelKey()), 10)
     : 1;
   if (isNaN(unlockedLevel) || unlockedLevel < 1) unlockedLevel = 1;
   if (unlockedLevel > LEVEL_COUNT) unlockedLevel = LEVEL_COUNT;
@@ -237,8 +267,8 @@ gameMode = localStorage.getItem('yawpGameMode') || 'easy';
 
 
 
-  const size = 9;
-  const maxCells = size * size; // 81
+  let size = boardSize;
+  let maxCells = size * size; // dinamico
   const cells = [];
 
   let maxNumber = 0;
@@ -280,7 +310,7 @@ gameMode = localStorage.getItem('yawpGameMode') || 'easy';
 
 
   function levelBestTimeKey(level) {
-    return "yawpBestTimeSeconds_L" + String(level);
+    return "yawpBestTimeSeconds_S" + String(boardSize) + "_L" + String(level);
   }
 
   
@@ -403,7 +433,7 @@ function formatSeconds(totalSeconds) {
     const uStr = best ? String(best.bestUndos ?? 0) : "-";
 
     bestTimeEl.innerHTML =
-      '<span class="yawp-version">v85</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
+      '<span class="yawp-version">v86</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
       ' <span class="best-stats">· 💡' + hStr + ' · ↩︎' + uStr + '</span>';
   }
 
@@ -629,7 +659,7 @@ if (!anyAllowed && maxNumber < maxCells) {
       // Unlock next level (if enabled in this build)
       if (typeof unlockedLevel !== "undefined" && currentLevel === unlockedLevel && unlockedLevel < LEVEL_COUNT) {
         unlockedLevel += 1;
-        localStorage.setItem("yawpUnlockedLevel", String(unlockedLevel));
+        localStorage.setItem(unlockedLevelKey(), String(unlockedLevel));
         if (typeof updateLevelSelectUI === "function") updateLevelSelectUI();
       }
 
@@ -812,7 +842,7 @@ if (!anyAllowed && maxNumber < maxCells) {
     vibrate([50, 30, 50]);
 
     if (len === maxCells) {
-      updateStatus("Soluzione completa fino a 81.");
+      updateStatus("Soluzione completa fino a " + maxCells + ".");
     } else {
       updateStatus("Soluzione estesa fino a " + len + ". Puoi continuare a mano o annullare.");
       updateAllowedCells();
@@ -1058,7 +1088,14 @@ if (!anyAllowed && maxNumber < maxCells) {
     }
   }, { passive: true });
 
-  // Creazione griglia con BUTTON (non input!)
+  // Creazione / ricreazione griglia con BUTTON (non input!)
+  function rebuildGrid() {
+    size = boardSize;
+    maxCells = size * size;
+    cells.length = 0;
+    gridEl.innerHTML = "";
+    gridEl.style.setProperty("--board-size", String(size));
+
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
       const cell = document.createElement("button");
@@ -1089,7 +1126,12 @@ if (!anyAllowed && maxNumber < maxCells) {
   }
 
   
-  function updateLevelSelectUI() {
+  
+  }
+
+  rebuildGrid();
+
+function updateLevelSelectUI() {
     if (!levelSelect) return;
 
     // popola opzioni se vuote
