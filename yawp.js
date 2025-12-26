@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let musicEnabled = (localStorage.getItem('yawpMusicEnabled') === '1');
 
   // ===== BACKGROUND MUSIC (WAV, 432Hz) =====
-  const BG_MUSIC_SRC = "background_music_432hz.wav?v=104";
+  const BG_MUSIC_SRC = "ASTMCA.m4a?v=106";
   let bgMusic = null;
 
   function ensureBgMusic() {
@@ -592,7 +592,7 @@ function formatSeconds(totalSeconds) {
     const uStr = best ? String(best.bestUndos ?? 0) : "-";
 
     bestTimeEl.innerHTML =
-      '<span class="yawp-version">v104</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
+      '<span class="yawp-version">v106</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
       ' <span class="best-stats">· 💡' + hStr + ' · ↩︎' + uStr + '</span>';
   }
 
