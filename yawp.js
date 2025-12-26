@@ -13,6 +13,40 @@ document.addEventListener("DOMContentLoaded", () => {
   let soundEnabled = (localStorage.getItem('yawpSound') !== '0');
   let musicBtn;
   let musicEnabled = (localStorage.getItem('yawpMusicEnabled') === '1');
+
+  // ===== BACKGROUND MUSIC (WAV, 432Hz) =====
+  const BG_MUSIC_SRC = "background_music_432hz.wav?v=104";
+  let bgMusic = null;
+
+  function ensureBgMusic() {
+    if (bgMusic) return bgMusic;
+    bgMusic = new Audio(BG_MUSIC_SRC);
+    bgMusic.loop = true;
+    bgMusic.preload = "auto";
+    bgMusic.volume = 0.22; // background level
+    return bgMusic;
+  }
+
+  async function startBackgroundMusic() {
+    if (!musicEnabled) return;
+    const a = ensureBgMusic();
+    try {
+      await a.play();
+    } catch (e) {
+      // autoplay blocked until user gesture; ignore
+    }
+  }
+
+  function stopBackgroundMusic() {
+    if (!bgMusic) return;
+    try {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+    } catch (e) {}
+  }
+  // ===== END BACKGROUND MUSIC =====
+
+
   let audioCtx = null;
   let audioUnlocked = false;
   let hintsUsed = 0;
@@ -24,6 +58,19 @@ document.addEventListener("DOMContentLoaded", () => {
   preventDoubleTapZoom(document.body);
   preventDoubleTapZoom(document.getElementById("grid"));
   const soundBtn = document.getElementById("sound-toggle");
+  if (musicBtn) {
+    const syncMusicUI = () => {
+      musicBtn.classList.toggle("off", !musicEnabled);
+    };
+    syncMusicUI();
+    musicBtn.addEventListener("click", async () => {
+      musicEnabled = !musicEnabled;
+      localStorage.setItem("yawpMusicEnabled", musicEnabled ? "1" : "0");
+      syncMusicUI();
+      if (musicEnabled) await startBackgroundMusic();
+      else stopBackgroundMusic();
+    });
+  }
   musicBtn = document.getElementById("music-toggle");
   if (soundBtn) {
     soundBtn.classList.toggle('off', !soundEnabled);
@@ -162,8 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
       audioCtx.resume().catch(() => {});
     }
     audioUnlocked = true;
-    if (musicEnabled && soundEnabled) startBackgroundMusic();
-  }
+    }
 
   function playTick() {
     if (!soundEnabled) return;
@@ -227,15 +273,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let musicStep = 0;
   let musicStartTime = 0;
 
-  function stopBackgroundMusic() {
-    if (musicTimer) {
-      clearTimeout(musicTimer);
-      musicTimer = null;
-    }
-    musicStep = 0;
-    musicStartTime = 0;
-    musicStarting = false;
-  }
+  
+
 
   function midiToFreq(m) {
     return 440 * Math.pow(2, (m - 69) / 12);
@@ -291,17 +330,8 @@ document.addEventListener("DOMContentLoaded", () => {
     musicTimer = setTimeout(scheduleBackgroundMusic, nextIn * 1000);
   }
 
-  function startBackgroundMusic() {
-    if (!musicEnabled) return;
-    if (!audioUnlocked || !audioCtx) return;
-    if (musicTimer || musicStarting) return;
-    musicStarting = true;
-    musicStep = 0;
-    musicStartTime = 0;
-    musicStarting = false;
-    scheduleBackgroundMusic();
-    musicStarting = false;
-  }
+  
+
   // ===== END BACKGROUND MUSIC =====
 
 
@@ -562,7 +592,7 @@ function formatSeconds(totalSeconds) {
     const uStr = best ? String(best.bestUndos ?? 0) : "-";
 
     bestTimeEl.innerHTML =
-      '<span class="yawp-version">v102</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
+      '<span class="yawp-version">v104</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
       ' <span class="best-stats">· 💡' + hStr + ' · ↩︎' + uStr + '</span>';
   }
 
