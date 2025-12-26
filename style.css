@@ -481,3 +481,72 @@ body {
 .grid button.allowed:hover {
   background-color: #c9eed3 !important;
 }
+
+
+/* feedback A: insert / error / undo */
+@keyframes cellPop {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,0,0,0.0); }
+  60%  { transform: scale(1.07); box-shadow: 0 0 0 6px rgba(122,203,138,0.22); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,0,0,0.0); }
+}
+
+@keyframes cellShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes undoFade {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.96); opacity: 0.25; }
+}
+
+.grid button.placed-ok{
+  animation: cellPop 0.16s ease-out 1;
+}
+
+.grid button.invalid-shake{
+  animation: cellShake 0.16s ease-in-out 1;
+}
+
+.grid button.undo-flash{
+  animation: undoFade 0.12s ease-out 1;
+}
+
+.small-btn{padding:6px 10px;font-size:0.95rem;}
+
+.music-note-btn{
+  width:44px;height:44px;
+  border-radius:14px;
+  border: 2px solid rgba(0,0,0,0.22);
+  background: rgba(255,255,255,0.75);
+  cursor:pointer;
+  font-size: 26px;
+  line-height: 1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+  margin-left: 6px;
+}
+.music-note-btn.off{opacity:0.45; filter:grayscale(1);}
+.music-note-btn:active{transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.12);}
+
+.sound-music-bar{display:flex;gap:12px;align-items:center;justify-content:center;margin-left:10px}
+.big-icon-btn{
+  width:56px;height:56px;
+  border-radius:16px;
+  border: 2px solid rgba(0,0,0,0.22);
+  background: rgba(255,255,255,0.78);
+  cursor:pointer;
+  font-size: 28px;
+  line-height: 1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+}
+.big-icon-btn.off{opacity:0.45; filter:grayscale(1);}
+.big-icon-btn:active{transform: translateY(2px); box-shadow: 0 4px 0 rgba(0,0,0,0.12);}

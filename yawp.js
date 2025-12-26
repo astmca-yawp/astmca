@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let boardSize = parseInt(localStorage.getItem("yawpBoardSize") || "9", 10);
   if (isNaN(boardSize) || (boardSize !== 6 && boardSize !== 9)) boardSize = 9;
   let soundEnabled = (localStorage.getItem('yawpSound') !== '0');
+  let musicBtn;
+  let musicEnabled = (localStorage.getItem('yawpMusicEnabled') === '1');
   let audioCtx = null;
   let audioUnlocked = false;
   let hintsUsed = 0;
@@ -22,22 +24,34 @@ document.addEventListener("DOMContentLoaded", () => {
   preventDoubleTapZoom(document.body);
   preventDoubleTapZoom(document.getElementById("grid"));
   const soundBtn = document.getElementById("sound-toggle");
+  musicBtn = document.getElementById("music-toggle");
   if (soundBtn) {
+    soundBtn.classList.toggle('off', !soundEnabled);
     const refreshSoundUI = () => {
-      soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
       soundBtn.classList.toggle("off", !soundEnabled);
     };
     refreshSoundUI();
     soundBtn.addEventListener("click", () => {
       // user gesture: unlock audio and toggle
-      unlockAudio();
-      soundEnabled = !soundEnabled;
+        soundEnabled = !soundEnabled;
       localStorage.setItem("yawpSound", soundEnabled ? "1" : "0");
       refreshSoundUI();
       showToast(soundEnabled ? "Audio ON" : "Audio OFF");
       try { navigator.vibrate?.(15); } catch(e) {}
     playTick();
     });
+  if (musicBtn) {
+    const syncMusicLabel = () => { if (!musicBtn) return; musicBtn.classList.toggle("off", !musicEnabled); };
+    syncMusicLabel();
+    musicBtn.addEventListener("click", () => {
+      musicEnabled = !musicEnabled;
+      localStorage.setItem("yawpMusicEnabled", musicEnabled ? "1" : "0");
+      syncMusicLabel();
+      if (musicEnabled) { unlockAudio(); startBackgroundMusic(); }
+      else stopBackgroundMusic();
+    });
+  }
+
   }
 
   if (modeSelect) {
@@ -148,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
       audioCtx.resume().catch(() => {});
     }
     audioUnlocked = true;
+    if (musicEnabled && soundEnabled) startBackgroundMusic();
   }
 
   function playTick() {
@@ -176,6 +191,121 @@ document.addEventListener("DOMContentLoaded", () => {
     osc.start(t0);
     osc.stop(t0 + 0.09);
   }
+  function playError() {
+    if (!soundEnabled || !audioUnlocked || !audioCtx) return;
+    try {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "square";
+      o.frequency.value = 160;
+      g.gain.value = 0.06;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start();
+      o.stop(audioCtx.currentTime + 0.06);
+    } catch (e) {}
+  }
+
+  function playUndo() {
+    if (!soundEnabled || !audioUnlocked || !audioCtx) return;
+    try {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.value = 260;
+      g.gain.value = 0.05;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start();
+      o.frequency.exponentialRampToValueAtTime(170, audioCtx.currentTime + 0.08);
+      o.stop(audioCtx.currentTime + 0.09);
+    } catch (e) {}
+  }
+  // ===== BACKGROUND MUSIC (generative, no copyright) =====
+  let musicTimer = null;
+  let musicStarting = false;
+  let musicStep = 0;
+  let musicStartTime = 0;
+
+  function stopBackgroundMusic() {
+    if (musicTimer) {
+      clearTimeout(musicTimer);
+      musicTimer = null;
+    }
+    musicStep = 0;
+    musicStartTime = 0;
+    musicStarting = false;
+  }
+
+  function midiToFreq(m) {
+    return 440 * Math.pow(2, (m - 69) / 12);
+  }
+
+  function playMusicTone(midi, when, dur, gain, type) {
+    try {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.value = midiToFreq(midi);
+
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(gain, when + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(when);
+      o.stop(when + dur + 0.02);
+    } catch (e) {}
+  }
+
+  function scheduleBackgroundMusic() {
+    if (!musicEnabled || !soundEnabled) return;
+    if (!audioUnlocked || !audioCtx) return;
+
+    const beat = 0.5; // ~120 BPM quarter
+    const now = audioCtx.currentTime;
+    if (!musicStartTime) musicStartTime = now + 0.05;
+
+    const bass = [0, 0, 7, 0, 5, 0, 7, 0, 0, 0, 7, 0, 5, 0, 10, 0];
+    const arp  = [0, 3, 7, 3, 0, 5, 8, 5, 0, 3, 7, 10, 8, 7, 5, 3];
+
+    const stepIdx = musicStep % 16;
+    const t = musicStartTime + musicStep * (beat / 2); // timeline crescente (eighths)
+
+    const loopCount = Math.floor(musicStep / 16);
+    const tr = (loopCount % 4 === 0) ? 0 : (loopCount % 4 === 1) ? 1 : (loopCount % 4 === 2) ? 0 : -1;
+
+    const base = 48 + tr; // C3
+
+    if (stepIdx % 2 === 0) {
+      playMusicTone(base + bass[stepIdx], t, beat * 0.45, 0.030, "triangle");
+    }
+    playMusicTone(base + 12 + arp[stepIdx], t, beat * 0.22, 0.015, "sine");
+
+    musicStep += 1;
+
+    // pianifica il prossimo step leggermente in anticipo
+    const target = musicStartTime + musicStep * (beat / 2);
+    const nextIn = Math.max(0, target - audioCtx.currentTime - 0.06);
+    musicTimer = setTimeout(scheduleBackgroundMusic, nextIn * 1000);
+  }
+
+  function startBackgroundMusic() {
+    if (!musicEnabled) return;
+    if (!audioUnlocked || !audioCtx) return;
+    if (musicTimer || musicStarting) return;
+    musicStarting = true;
+    musicStep = 0;
+    musicStartTime = 0;
+    musicStarting = false;
+    scheduleBackgroundMusic();
+    musicStarting = false;
+  }
+  // ===== END BACKGROUND MUSIC =====
+
+
+
   /* ===== END AUDIO ===== */
 
 function applyDebugUI() {
@@ -210,8 +340,7 @@ function applyDebugUI() {
     let idx = 0;
 
     gridEl.addEventListener("click", (e) => {
-      unlockAudio();
-      const btn = e.target.closest("button");
+        const btn = e.target.closest("button");
       if (!btn) return;
 
       const r = parseInt(btn.dataset.row, 10);
@@ -433,7 +562,7 @@ function formatSeconds(totalSeconds) {
     const uStr = best ? String(best.bestUndos ?? 0) : "-";
 
     bestTimeEl.innerHTML =
-      '<span class="yawp-version">v86</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
+      '<span class="yawp-version">v102</span> 🏆 Livello ' + currentLevel + ": " + timeStr +
       ' <span class="best-stats">· 💡' + hStr + ' · ↩︎' + uStr + '</span>';
   }
 
@@ -478,6 +607,8 @@ function formatSeconds(totalSeconds) {
   function pulseCell(cell) {
 
     cell.classList.add("just-placed");
+    cell.classList.add("placed-ok");
+    setTimeout(() => cell.classList.remove("placed-ok"), 180);
     setTimeout(() => cell.classList.remove("just-placed"), 120);
   }
 
@@ -574,8 +705,16 @@ if (!anyAllowed && maxNumber < maxCells) {
   }
 
 
-  function invalidMoveFeedback() {
+  function invalidMoveFeedback(cell) {
     vibrate([40, 40, 40]);
+    if (cell) {
+      cell.classList.remove("invalid-shake");
+      // force reflow to restart animation
+      void cell.offsetWidth;
+      cell.classList.add("invalid-shake");
+      setTimeout(() => cell.classList.remove("invalid-shake"), 180);
+    }
+    playError();
   }
 
   function placeNextNumber(cell) {
@@ -590,30 +729,30 @@ if (!anyAllowed && maxNumber < maxCells) {
 
     // If next number is fixed somewhere else, you must click that exact cell
     if (fixedPos[nextNum] && fixedPos[nextNum].idx !== idxHere) {
-      invalidMoveFeedback();
+      invalidMoveFeedback(cell);
       return;
     }
 
     // Movement constraint from previous number
     if (maxNumber > 0 && !canMove(lastRow, lastCol, row, col)) {
-      invalidMoveFeedback();
+      invalidMoveFeedback(cell);
       return;
     }
 
     if (isFixedCell) {
       // Fixed cell can be used only when it matches nextNum
       if (cellVal !== String(nextNum)) {
-        invalidMoveFeedback();
+        invalidMoveFeedback(cell);
         return;
       }
     } else {
       // Normal cell must be empty
-      if (cellVal !== "") return;
+      if (cellVal !== "") { invalidMoveFeedback(cell); return; }
 
       // Lookahead: if next+1 is fixed, this move must allow reaching it
       const nf = fixedPos[nextNum + 1];
       if (nf && !canMove(row, col, nf.row, nf.col)) {
-        invalidMoveFeedback();
+        invalidMoveFeedback(cell);
         return;
       }
     }
@@ -631,10 +770,11 @@ if (!anyAllowed && maxNumber < maxCells) {
     lastRow = row;
     lastCol = col;
     vibrate(20);
-    unlockAudio();
     playTick();
 
     cell.classList.add("just-placed");
+    cell.classList.add("placed-ok");
+    setTimeout(() => cell.classList.remove("placed-ok"), 180);
     setTimeout(() => cell.classList.remove("just-placed"), 120);
 
     if (maxNumber === maxCells) {
@@ -931,7 +1071,7 @@ if (!anyAllowed && maxNumber < maxCells) {
   function undoLastMove() {
     if (maxNumber === 0) {
       updateStatus("Non ci sono mosse da annullare.");
-      invalidMoveFeedback();
+      invalidMoveFeedback(cell);
       return;
     }
 
@@ -948,7 +1088,7 @@ if (!anyAllowed && maxNumber < maxCells) {
       generateLevelLayout(currentLevel);
       loadBestTimeForLevel(currentLevel);
       updateBestTimeDisplay();
-      invalidMoveFeedback();
+      invalidMoveFeedback(cell);
       return;
     }
 
@@ -985,7 +1125,7 @@ if (!anyAllowed && maxNumber < maxCells) {
       generateLevelLayout(currentLevel);
       loadBestTimeForLevel(currentLevel);
       updateBestTimeDisplay();
-      invalidMoveFeedback();
+      invalidMoveFeedback(cell);
       return;
     }
 
@@ -1007,7 +1147,7 @@ if (!anyAllowed && maxNumber < maxCells) {
       if (bestLen <= state.prefixK) {
         highlightHighest();
         updateStatus("Non ho trovato un'estensione migliore rispetto alla situazione attuale.");
-        invalidMoveFeedback();
+        invalidMoveFeedback(cell);
       } else {
         applySolution(bestPath, bestLen);
       }
@@ -1030,7 +1170,7 @@ if (!anyAllowed && maxNumber < maxCells) {
 
       if (maxNumber === 0 || lastRow === null || lastCol === null) {
         updateStatus("Prima scegli una cella per il numero 1.");
-        invalidMoveFeedback();
+        invalidMoveFeedback(cell);
         return;
       }
 
@@ -1038,7 +1178,7 @@ if (!anyAllowed && maxNumber < maxCells) {
       const nc = lastCol + dc;
 
       if (!inBounds(nr, nc)) {
-        invalidMoveFeedback();
+        invalidMoveFeedback(cell);
         return;
       }
 
@@ -1046,7 +1186,7 @@ if (!anyAllowed && maxNumber < maxCells) {
       const targetCell = cells[idx];
 
       if (targetCell.textContent.trim() !== "" || !canMove(lastRow, lastCol, nr, nc)) {
-        invalidMoveFeedback();
+        invalidMoveFeedback(cell);
         return;
       }
 

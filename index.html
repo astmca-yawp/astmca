@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <!-- YAWP version: v86 -->
+    <!-- YAWP version: v102 -->
   <meta charset="UTF-8">
-  <title>YaWp v86</title>
+  <title>YaWp v102</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=86">
-  <script defer src="yawp.js?v=86"></script>
+  <link rel="stylesheet" href="style.css?v=102">
+  <script defer src="yawp.js?v=102"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="astmca_logo.png" type="image/png">
 </head>
@@ -36,7 +36,10 @@
         <option value="6">6×6</option>
         <option value="9">9×9</option>
       </select>
-      <button id="sound-toggle" class="sound-toggle" type="button" aria-label="Audio"></button>
+      <div class="sound-music-bar">
+  <button id="sound-toggle" class="big-icon-btn sound" type="button" aria-label="Effetti">🔊</button>
+  <button id="music-toggle" class="big-icon-btn music off" type="button" aria-label="Musica">♪</button>
+</div>
     </div>
 
 <div id="grid" class="grid"></div>
@@ -46,26 +49,7 @@
         <button id="solve-btn" type="button">✔️</button>
         <button id="hint-btn" type="button">💡</button>
       </div>
-
-      <div class="quick-keys">
-        <div class="quick-row">
-          <button class="qkey" type="button" data-dr="-2" data-dc="-2">↖︎</button>
-          <button class="qkey" type="button" data-dr="-3" data-dc="0">↑</button>
-          <button class="qkey" type="button" data-dr="-2" data-dc="2">↗︎</button>
-        </div>
-        <div class="quick-row">
-          <button class="qkey" type="button" data-dr="0" data-dc="-3">←</button>
-          <div class="quick-center">MOVE</div>
-          <button class="qkey" type="button" data-dr="0" data-dc="3">→</button>
-        </div>
-        <div class="quick-row">
-          <button class="qkey" type="button" data-dr="2" data-dc="-2">↙︎</button>
-          <button class="qkey" type="button" data-dr="3" data-dc="0">↓</button>
-          <button class="qkey" type="button" data-dr="2" data-dc="2">↘︎</button>
-        </div>
-      </div>
-
-      <div class="side-group side-right">
+<div class="side-group side-right">
         <button id="undo-btn" type="button">↩️</button>
         <button id="clear-btn" type="button">🗑️</button>
       </div>
