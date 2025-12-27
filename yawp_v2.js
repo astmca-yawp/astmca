@@ -819,6 +819,9 @@ function formatSeconds(totalSeconds) {
   }
 
   function placeNextNumber(cell) {
+    // Ensure countdown attaches to the current cell even on mobile (no focus event).
+    setActiveCell(cell);
+
     // v2.021: clear one removable logo cell.
     const row = parseInt(cell.dataset.row, 10);
     const col = parseInt(cell.dataset.col, 10);
@@ -1327,7 +1330,10 @@ function formatSeconds(totalSeconds) {
         cell.dataset.colBorder = "true";
       }
 
+      cell.addEventListener("pointerdown", () => { setActiveCell(cell); });
+
       cell.addEventListener("click", () => {
+        setActiveCell(cell);
         placeNextNumber(cell);
       });
 
