@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function start(version) {
     // Safety: hide overlay, show app controls
-    if (overlay) overlay.classList.add("hidden");
+    if (overlay) overlay.hidden = true;
 
     // Initialize correct engine
     if (version === "v1") {
@@ -40,13 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (changeBtn) {
     changeBtn.addEventListener("click", () => {
       // show overlay and allow switching; switching triggers reload
-      if (overlay) overlay.classList.remove("hidden");
+      if (overlay) overlay.hidden = false;
     });
   }
 
   if (!chosen) {
     // No choice yet: show overlay and wait
-    if (overlay) overlay.classList.remove("hidden");
+    if (overlay) overlay.hidden = false;
     return;
   }
 

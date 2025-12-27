@@ -699,3 +699,7 @@ body {
   margin-right:8px;
 }
 /* ===== end ===== */
+
+
+/* Fallback: ensure HTML hidden attribute works even if class-based toggles change */
+[hidden]{ display:none !important; }
