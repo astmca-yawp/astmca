@@ -45,7 +45,7 @@ window.YAWP_V2_init = function() {
     } catch (e) {}
   }
 
-  // v2.05: On mobile (and in general), pause music when the page goes to background.
+  // v2.14: On mobile (and in general), pause music when the page goes to background.
   // This avoids audio continuing when the user switches apps or locks the screen.
   function syncBackgroundMusicWithAppState() {
     if (!bgMusic) return;
@@ -550,7 +550,7 @@ gameMode = localStorage.getItem('yawpGameMode') || 'easy';
     // Hue scale: 120 (green-ish) -> 0 (red)
     const hue = Math.max(0, Math.min(120, 120 * ratio));
 
-    // v2.05: ensure the green countdown is always readable with a black outline.
+    // v2.14: ensure the green countdown is always readable with a black outline.
     // (We keep a lighter outline when the hue moves toward red/urgent.)
     const stroke = (hue >= 80) ? "rgba(0,0,0,0.98)" : "rgba(0,0,0,0.28)";
 
@@ -1332,7 +1332,10 @@ function formatSeconds(totalSeconds) {
 
       cell.addEventListener("pointerdown", () => { setActiveCell(cell); });
 
-      cell.addEventListener("click", () => {
+      
+      // Mobile fallback: iOS Safari may skip pointer events in some contexts
+      cell.addEventListener("touchstart", () => { setActiveCell(cell); }, { passive: true });
+cell.addEventListener("click", () => {
         setActiveCell(cell);
         placeNextNumber(cell);
       });
