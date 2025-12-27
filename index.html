@@ -23,7 +23,7 @@
       <button id="choose-v1" type="button" class="version-btn v1">Numeri (V1)</button>
       <button id="choose-v2" type="button" class="version-btn v2">Simboli (V2)</button>
     </div>
-    <div class="version-note">Puoi cambiare in qualsiasi momento con il pulsante ↺.</div>
+    <div class="version-note">Puoi cambiare in qualsiasi momento con il pulsante ⇄.</div>
   </div>
 </div>
   <div class="app">
@@ -49,24 +49,22 @@
         <option value="6">6×6</option>
         <option value="9">9×9</option>
       </select>
-      <button id="change-version-btn" class="big-icon-btn change-version" type="button" aria-label="Cambia versione">↺</button>
-      <div class="sound-music-bar">
-  <button id="sound-toggle" class="big-icon-btn sound" type="button" aria-label="Effetti">🔊</button>
-  <button id="music-toggle" class="big-icon-btn music off" type="button" aria-label="Musica">♪</button>
-</div>
     </div>
 
 <div id="grid" class="grid"></div>
 
-    <div class="controls-layout">
-      <div class="side-group side-left">
-        <button id="solve-btn" type="button">✔️</button>
-        <button id="hint-btn" type="button">💡</button>
-      </div>
-<div class="side-group side-right">
-        <button id="undo-btn" type="button">↩️</button>
-        <button id="clear-btn" type="button">🗑️</button>
-      </div>
+    <div class="bottom-bar" role="toolbar" aria-label="Comandi">
+      <button id="switch-version-btn" class="icon-btn switch-version" type="button" aria-label="Cambia versione">⇄</button>
+
+      <button id="undo-btn" class="icon-btn" type="button" aria-label="Annulla">↩️</button>
+      <button id="hint-btn" class="icon-btn" type="button" aria-label="Suggerimento">💡</button>
+      <button id="clear-btn" class="icon-btn" type="button" aria-label="Svuota">🗑️</button>
+
+      <button id="sound-toggle" class="icon-btn sound" type="button" aria-label="Effetti">🔊</button>
+      <button id="music-toggle" class="icon-btn music off" type="button" aria-label="Musica">♪</button>
+
+      <!-- preservato per compatibilità: alcune versioni usano questo controllo -->
+      <button id="solve-btn" class="icon-btn hidden-solve" type="button" aria-label="Risolvi">✔️</button>
     </div>
 
     <div class="legend">

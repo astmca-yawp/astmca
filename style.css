@@ -703,3 +703,50 @@ body {
 
 /* Fallback: ensure HTML hidden attribute works even if class-based toggles change */
 [hidden]{ display:none !important; }
+
+
+/* v2.12 – Barra comandi unica in basso */
+.bottom-bar{
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(245, 240, 230, 0.92);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+}
+
+.icon-btn{
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 2px solid rgba(0,0,0,0.12);
+  background: #f7f3ea;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.08);
+  font-size: 22px;
+  line-height: 1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active{
+  transform: translateY(2px);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.08);
+}
+
+.icon-btn.switch-version{
+  font-size: 24px;
+}
+
+.hidden-solve{ display:none !important; }

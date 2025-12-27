@@ -1,54 +1,56 @@
 document.addEventListener("DOMContentLoaded", () => {
   const VERSION_KEY = "yawpVersion"; // "v1" | "v2"
-  const chosen = localStorage.getItem(VERSION_KEY) || "";
+  let current = localStorage.getItem(VERSION_KEY) || "";
 
   const overlay = document.getElementById("version-overlay");
   const chooseV1 = document.getElementById("choose-v1");
   const chooseV2 = document.getElementById("choose-v2");
-  const changeBtn = document.getElementById("change-version-btn");
+  const switchBtn = document.getElementById("switch-version-btn");
+
+  function hasEngine(version){
+    return (version === "v1" && typeof window.YAWP_V1_init === "function") ||
+           (version === "v2" && typeof window.YAWP_V2_init === "function");
+  }
 
   function start(version) {
-    // Safety: hide overlay, show app controls
+    if (!hasEngine(version)) {
+      console.error("Engine non disponibile:", version);
+      return;
+    }
+
+    // Hide chooser
     if (overlay) overlay.hidden = true;
 
-    // Initialize correct engine
-    if (version === "v1") {
-      if (typeof window.YAWP_V1_init !== "function") {
-        console.error("YAWP_V1_init not found");
-        return;
-      }
-      window.YAWP_V1_init();
-      return;
-    }
-    // default v2
-    if (typeof window.YAWP_V2_init !== "function") {
-      console.error("YAWP_V2_init not found");
-      return;
-    }
-    window.YAWP_V2_init();
+    // Start selected engine
+    if (version === "v1") window.YAWP_V1_init();
+    if (version === "v2") window.YAWP_V2_init();
   }
 
-  function pick(version) {
+  function choose(version){
+    // If already running a different version, reload to guarantee clean state.
+    if (current && current !== version) {
+      localStorage.setItem(VERSION_KEY, version);
+      location.reload();
+      return;
+    }
+    current = version;
     localStorage.setItem(VERSION_KEY, version);
-    // reload to guarantee clean listeners/state
-    location.reload();
+    start(version);
   }
 
-  if (chooseV1) chooseV1.addEventListener("click", () => pick("v1"));
-  if (chooseV2) chooseV2.addEventListener("click", () => pick("v2"));
+  if (chooseV1) chooseV1.addEventListener("click", () => choose("v1"));
+  if (chooseV2) chooseV2.addEventListener("click", () => choose("v2"));
 
-  if (changeBtn) {
-    changeBtn.addEventListener("click", () => {
-      // show overlay and allow switching; switching triggers reload
+  if (switchBtn) {
+    switchBtn.addEventListener("click", () => {
       if (overlay) overlay.hidden = false;
     });
   }
 
-  if (!chosen) {
-    // No choice yet: show overlay and wait
+  if (!current) {
     if (overlay) overlay.hidden = false;
     return;
   }
 
-  start(chosen);
+  start(current);
 });
