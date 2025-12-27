@@ -38,6 +38,9 @@ body {
 
 /* Celle come pulsanti, font numerico come YaWp */
 .grid button {
+  position: relative;
+  overflow: hidden;
+
   width: 100%;
   aspect-ratio: 1 / 1;
   text-align: center;
@@ -48,6 +51,42 @@ body {
   border: 1px solid #ccc;
   padding: 0;
   background: #fff;
+}
+
+/* v2.02: make empty cells less visible to emphasize remaining logos */
+.grid button[data-state="empty"] {
+  background: #d8d8d8 !important;
+  border-color: #c0c0c0 !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.grid button[data-state="empty"].allowed,
+.grid button[data-state="empty"].hint,
+.grid button[data-state="empty"].unreachable {
+  animation: none !important;
+}
+
+/* v2.0: small logo inside cells */
+.grid button .cell-logo {
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.grid button.iron {
+  background: #f2f2f2;
+  border-color: #777;
+}
+
+.grid button.iron .cell-logo {
+  filter: grayscale(1) contrast(1.35) brightness(0.8);
+  opacity: 0.9;
 }
 
 /* bordi tipo sudoku */
@@ -417,18 +456,9 @@ body {
 }
 
 .grid::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("astmca_logo_watermark.png?v=77");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 72%;
-  opacity: var(--logo-opacity);
-  pointer-events: none;
-  z-index: 5;              /* sopra le celle */
-  mix-blend-mode: multiply; /* visibile anche su sfondi chiari */
+  content: none;
 }
+
 
 
 .best-stats{font-size:0.95rem;opacity:0.85;}
@@ -550,3 +580,122 @@ body {
 }
 .big-icon-btn.off{opacity:0.45; filter:grayscale(1);}
 .big-icon-btn:active{transform: translateY(2px); box-shadow: 0 4px 0 rgba(0,0,0,0.12);}
+
+/* v2.03: contatore celle rimanenti nella cella attiva */
+.grid button.active {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Make the active cell feel "alive" and keep focus on the countdown */
+.grid button.active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, hsla(var(--hue, 210), 92%, 55%, 0.22), transparent 60%);
+  pointer-events: none;
+}
+
+.grid button.active .cell-logo {
+  opacity: 0.14;
+  transform: scale(0.96);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.remaining-badge {
+  /* Countdown: fill the active cell */
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  min-width: unset;
+
+  font-weight: 900;
+  font-size: clamp(26px, 8vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+
+  color: hsl(var(--hue, 210) 92% 44%);
+  /* v2.05: black outline for the countdown (especially when green) */
+  -webkit-text-stroke: 2px var(--stroke, rgba(0,0,0,0.28));
+  paint-order: stroke fill;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.22);
+  pointer-events: none;
+}
+
+.remaining-badge.pulse {
+  animation: yawp-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes yawp-pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+
+
+/* ===== v2.10 Unified menu overlay (V1/V2) ===== */
+.version-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.55);
+  z-index:9999;
+  padding:16px;
+}
+.version-overlay.hidden{ display:none; }
+.version-card{
+  width:min(520px, 92vw);
+  background:#111;
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:18px;
+  box-shadow: 0 14px 44px rgba(0,0,0,0.45);
+  padding:18px 16px;
+  text-align:center;
+}
+.version-title{
+  font-family: "Fredoka", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-weight:600;
+  font-size:20px;
+  letter-spacing:0.2px;
+  margin-bottom:6px;
+}
+.version-subtitle{
+  opacity:0.85;
+  font-size:14px;
+  margin-bottom:14px;
+}
+.version-actions{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  margin: 10px 0 12px;
+}
+.version-btn{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.16);
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  padding:14px 12px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+.version-btn:hover{ background:rgba(255,255,255,0.12); }
+.version-note{
+  opacity:0.75;
+  font-size:12px;
+}
+.big-icon-btn.change-version{
+  margin-right:8px;
+}
+/* ===== end ===== */

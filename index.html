@@ -1,24 +1,37 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <!-- YAWP version: v106 -->
+    <!-- YAWP version: v2.10 (Unified V1+V2) -->
   <meta charset="UTF-8">
-  <title>YaWp v106</title>
+  <title>YAWP ASTMCA v2.10</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=106">
-  <script defer src="yawp.js?v=106"></script>
+  <script defer src="yawp_v1.js?v=210"></script>
+  <script defer src="yawp_v2.js?v=210"></script>
+  <script defer src="yawp.js?v=210"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" href="astmca_logo.png" type="image/png">
 </head>
 <body>
+<div id="version-overlay" class="version-overlay hidden" role="dialog" aria-modal="true">
+  <div class="version-card">
+    <div class="version-title">Scegli modalità di gioco</div>
+    <div class="version-subtitle">Poi seleziona Facile/Classica e 6×6/9×9.</div>
+    <div class="version-actions">
+      <button id="choose-v1" type="button" class="version-btn v1">Numeri (V1)</button>
+      <button id="choose-v2" type="button" class="version-btn v2">Simboli (V2)</button>
+    </div>
+    <div class="version-note">Puoi cambiare in qualsiasi momento con il pulsante ↺.</div>
+  </div>
+</div>
   <div class="app">
 
     <h1 class="yawp-title" style="margin-bottom:4px;"></h1>
 
     <div id="timer" class="timer-box">⏱️ 00:00</div>
-    <div id="best-time" class="timer-box best-time"><span class="yawp-version">v62</span> <span class="yawp-version">v63</span> 🏆 Livello 1: --:--</div>
+    <div id="best-time" class="timer-box best-time"><span class="yawp-version">v2.05</span> 🏆 Livello 1: --:--</div>
     <div class="level-box">
       <label for="level-select">Livello:</label>
       <select id="level-select"></select>
@@ -36,6 +49,7 @@
         <option value="6">6×6</option>
         <option value="9">9×9</option>
       </select>
+      <button id="change-version-btn" class="big-icon-btn change-version" type="button" aria-label="Cambia versione">↺</button>
       <div class="sound-music-bar">
   <button id="sound-toggle" class="big-icon-btn sound" type="button" aria-label="Effetti">🔊</button>
   <button id="music-toggle" class="big-icon-btn music off" type="button" aria-label="Musica">♪</button>
@@ -56,13 +70,14 @@
     </div>
 
     <div class="legend">
-      Blu = mosse possibili · Arancione = mossa consigliata · Giallo = numero più alto · Swipe a destra = ↩️
+      Blu = mosse possibili · Arancione = mossa consigliata · Grigio = ferro (non eliminabile) · Swipe a destra = ↩️
     </div>
 
     <div id="status" class="status"></div>
 
     <p class="rules">
-      Regole: riempi tutte le 81 celle con numeri progressivi (1, 2, 3, …, 81) senza ripetizioni. 1 può stare in qualsiasi cella; ogni numero successivo deve essere sulla stessa riga o colonna saltando 2 celle (spostamento di 3), oppure in diagonale saltando 1 cella (spostamento di 2 in riga e colonna). In modalità Facile è consentito anche saltare 1 cella in orizzontale/verticale (spostamento di 2) e la mossa “cavallo” (2+1).
+      Regole: la griglia parte piena di micro-loghi ASTMCA. Ad ogni mossa elimini un solo logo. La prima mossa può partire da qualsiasi cella; ogni mossa successiva deve rispettare gli stessi vincoli di spostamento (riga/colonna con salto, diagonale con salto; in modalità Facile anche salto corto e “cavallo”). Obiettivo: svuotare tutte le celle eliminabili. Nei livelli avanzati possono comparire celle di ferro grigie: non si possono eliminare.
+    </p>
   <div id="victory-overlay" class="victory-overlay hidden" aria-hidden="true">
     <div id="confetti-layer" class="confetti-layer" aria-hidden="true"></div>
 
